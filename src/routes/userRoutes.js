@@ -3,6 +3,7 @@ const {
   getUsers,
   getUser,
   updateUser,
+  updateUserRole,
   deleteUser,
 } = require('../controllers/userController');
 const {
@@ -21,8 +22,11 @@ router.post('/login', login);
 router.get('/profile', protect, getMe);
 router.put('/profile', protect, updateProfile);
 
-// Admin user management routes
-router.use(protect, authorize('admin'));
+// Exclusive Owner endpoint: Toggle/Update User Role
+router.put('/:id/role', protect, authorize('owner'), updateUserRole);
+
+// Admin & Owner supervisory routes
+router.use(protect, authorize('admin', 'owner'));
 
 router.route('/').get(getUsers);
 router.route('/:id').get(getUser).put(updateUser).delete(deleteUser);

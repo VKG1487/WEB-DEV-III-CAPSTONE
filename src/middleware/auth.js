@@ -53,7 +53,10 @@ exports.authorize = (...roles) => {
       return next(new ErrorResponse('Role header or authentication required before authorization check', 401));
     }
 
-    if (!roles.includes(userRole)) {
+    // Owner has full supervisory access for admin endpoints; routes explicitly requiring 'owner' are restricted to owner only
+    const hasPermission = roles.includes(userRole) || (userRole === 'owner' && roles.includes('admin'));
+
+    if (!hasPermission) {
       return next(
         new ErrorResponse(
           `Forbidden: User role '${userRole}' is not authorized to access this endpoint. Required role(s): [${roles.join(', ')}]`,

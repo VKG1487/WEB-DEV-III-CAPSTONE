@@ -201,6 +201,18 @@ const API_ENDPOINTS = [
       description: 'Next-generation consoles, accessories, and virtual reality gear',
       icon: 'gamepad'
     }
+  },
+  // Owner Endpoints (Exclusive to vkg)
+  {
+    actor: 'owner',
+    method: 'PUT',
+    endpoint: '/api/users/REPLACE_WITH_USER_ID/role',
+    name: 'Toggle User Role (Owner Only)',
+    description: 'Exclusive endpoint allowing System Owner (vkg) to assign Customer, Vendor, or Admin roles to any user',
+    authRequired: true,
+    body: {
+      role: 'vendor'
+    }
   }
 ];
 
@@ -279,7 +291,9 @@ async function quickLogin(email, password) {
     showToast(`Logged in as ${res.data.data.name} (${res.data.data.role.toUpperCase()})`, 'success');
 
     // Auto navigate to relevant tab
-    if (res.data.data.role === 'admin') {
+    if (res.data.data.role === 'owner') {
+      switchTab('owner-panel');
+    } else if (res.data.data.role === 'admin') {
       switchTab('admin-panel');
     } else if (res.data.data.role === 'vendor') {
       switchTab('vendor-portal');
@@ -303,6 +317,7 @@ function logout() {
 // Update Header Navigation & User Actions based on Role
 function updateAuthUI() {
   const authContainer = document.getElementById('authActions');
+  const ownerBtn = document.getElementById('ownerTabBtn');
   const vendorBtn = document.getElementById('vendorTabBtn');
   const adminBtn = document.getElementById('adminTabBtn');
   const myOrdersBtn = document.getElementById('myOrdersTabBtn');
@@ -310,14 +325,21 @@ function updateAuthUI() {
 
   if (state.currentUser) {
     const role = state.currentUser.role;
-    const roleBadgeColor = role === 'admin' ? 'bg-amber-100 text-amber-800' : role === 'vendor' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800';
+    const roleBadgeColor =
+      role === 'owner'
+        ? 'bg-purple-100 text-purple-900 border border-purple-300'
+        : role === 'admin'
+        ? 'bg-amber-100 text-amber-800 border border-amber-300'
+        : role === 'vendor'
+        ? 'bg-blue-100 text-blue-800 border border-blue-300'
+        : 'bg-green-100 text-green-800 border border-green-300';
 
     authContainer.innerHTML = `
       <div class="flex items-center space-x-2">
         <div class="text-right hidden sm:block">
           <div class="text-xs font-bold text-slate-800 leading-tight">${state.currentUser.name}</div>
           <span class="inline-block text-[10px] font-semibold uppercase px-1.5 py-0.2 rounded ${roleBadgeColor}">
-            ${role}
+            ${role === 'owner' ? '<i class="fa-solid fa-crown text-amber-500 mr-1"></i> ' + role : role}
           </span>
         </div>
         <button onclick="logout()" title="Logout" class="p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-slate-100 transition">
@@ -327,18 +349,26 @@ function updateAuthUI() {
     `;
 
     // Role tabs visibility
-    if (role === 'admin') {
-      adminBtn.classList.remove('hidden');
-      vendorBtn.classList.remove('hidden');
-      myOrdersBtn.classList.remove('hidden');
+    if (role === 'owner') {
+      if (ownerBtn) ownerBtn.classList.remove('hidden');
+      if (adminBtn) adminBtn.classList.remove('hidden');
+      if (vendorBtn) vendorBtn.classList.remove('hidden');
+      if (myOrdersBtn) myOrdersBtn.classList.remove('hidden');
+    } else if (role === 'admin') {
+      if (ownerBtn) ownerBtn.classList.add('hidden');
+      if (adminBtn) adminBtn.classList.remove('hidden');
+      if (vendorBtn) vendorBtn.classList.remove('hidden');
+      if (myOrdersBtn) myOrdersBtn.classList.remove('hidden');
     } else if (role === 'vendor') {
-      vendorBtn.classList.remove('hidden');
-      adminBtn.classList.add('hidden');
-      myOrdersBtn.classList.remove('hidden');
+      if (ownerBtn) ownerBtn.classList.add('hidden');
+      if (vendorBtn) vendorBtn.classList.remove('hidden');
+      if (adminBtn) adminBtn.classList.add('hidden');
+      if (myOrdersBtn) myOrdersBtn.classList.remove('hidden');
     } else {
-      vendorBtn.classList.add('hidden');
-      adminBtn.classList.add('hidden');
-      myOrdersBtn.classList.remove('hidden');
+      if (ownerBtn) ownerBtn.classList.add('hidden');
+      if (vendorBtn) vendorBtn.classList.add('hidden');
+      if (adminBtn) adminBtn.classList.add('hidden');
+      if (myOrdersBtn) myOrdersBtn.classList.remove('hidden');
     }
 
     if (activeTokenDisplay) {
@@ -354,9 +384,10 @@ function updateAuthUI() {
       </button>
     `;
 
-    vendorBtn.classList.add('hidden');
-    adminBtn.classList.add('hidden');
-    myOrdersBtn.classList.add('hidden');
+    if (ownerBtn) ownerBtn.classList.add('hidden');
+    if (vendorBtn) vendorBtn.classList.add('hidden');
+    if (adminBtn) adminBtn.classList.add('hidden');
+    if (myOrdersBtn) myOrdersBtn.classList.add('hidden');
 
     if (activeTokenDisplay) {
       activeTokenDisplay.textContent = 'None (Guest / Public)';
@@ -394,6 +425,8 @@ function switchTab(tabId) {
     loadVendorData();
   } else if (tabId === 'admin-panel') {
     loadAdminData();
+  } else if (tabId === 'owner-panel') {
+    loadOwnerData();
   }
 }
 
@@ -1046,7 +1079,7 @@ async function handleUpdateOrderStatus(orderId, status) {
 
 // Admin Panel Logic
 async function loadAdminData() {
-  if (!state.currentUser || state.currentUser.role !== 'admin') return;
+  if (!state.currentUser || (state.currentUser.role !== 'admin' && state.currentUser.role !== 'owner')) return;
 
   try {
     // 1. Stats
@@ -1071,9 +1104,15 @@ async function loadAdminData() {
           <td class="px-4 py-2.5 text-xs text-gray-500 font-mono">${u.email}</td>
           <td class="px-4 py-2.5">
             <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
-              u.role === 'admin' ? 'bg-amber-100 text-amber-800' : u.role === 'vendor' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+              u.role === 'owner'
+                ? 'bg-purple-100 text-purple-900 border border-purple-300'
+                : u.role === 'admin'
+                ? 'bg-amber-100 text-amber-800'
+                : u.role === 'vendor'
+                ? 'bg-blue-100 text-blue-800'
+                : 'bg-gray-100 text-gray-800'
             }">
-              ${u.role}
+              ${u.role === 'owner' ? '<i class="fa-solid fa-crown text-amber-500 mr-1"></i> owner' : u.role}
             </span>
           </td>
           <td class="px-4 py-2.5">
@@ -1083,9 +1122,13 @@ async function loadAdminData() {
           </td>
           <td class="px-4 py-2.5 text-xs text-gray-400">${new Date(u.createdAt).toLocaleDateString()}</td>
           <td class="px-4 py-2.5 text-right space-x-1">
-            <button onclick="handleToggleUserRole('${u._id}', '${u.role === 'vendor' ? 'customer' : 'vendor'}')" class="px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold border border-gray-300">
-              Toggle Role
-            </button>
+            ${
+              state.currentUser?.role === 'owner'
+                ? `<button onclick="switchTab('owner-panel')" class="px-2 py-1 rounded bg-purple-50 hover:bg-purple-100 text-purple-800 text-[11px] font-semibold border border-purple-200">
+                    <i class="fa-solid fa-crown text-amber-500 mr-1"></i> Owner Panel
+                   </button>`
+                : `<span class="text-[11px] text-gray-500 italic"><i class="fa-solid fa-lock text-[10px] mr-1 text-purple-600"></i> Owner-Only</span>`
+            }
           </td>
         </tr>
       `).join('');
@@ -1160,14 +1203,137 @@ function switchAdminSubtab(subtab) {
   document.getElementById(`admin-subtab-${subtab}`).classList.remove('hidden');
 }
 
-async function handleToggleUserRole(userId, newRole) {
-  try {
-    await api.updateUser(userId, { role: newRole });
-    showToast(`User role updated to ${newRole}`, 'success');
-    loadAdminData();
-  } catch (err) {
-    showToast(`Failed: ${err.message}`, 'error');
+// ==========================================
+// OWNER PANEL LOGIC (Single Owner: vkg)
+// ==========================================
+
+let ownerUsersCache = [];
+
+async function loadOwnerData() {
+  if (!state.currentUser || state.currentUser.role !== 'owner') {
+    showToast('Access restricted: Only the system owner (vkg) can view this panel.', 'error');
+    switchTab('marketplace');
+    return;
   }
+
+  try {
+    const usersRes = await api.getUsers();
+    const users = usersRes.data.data;
+    ownerUsersCache = users;
+
+    // Update KPI metrics
+    const totalUsers = users.length;
+    const customers = users.filter((u) => u.role === 'customer').length;
+    const vendors = users.filter((u) => u.role === 'vendor').length;
+    const admins = users.filter((u) => u.role === 'admin').length;
+    const owners = users.filter((u) => u.role === 'owner').length;
+
+    const elTotal = document.getElementById('ownerKpiTotal');
+    const elCustomers = document.getElementById('ownerKpiCustomers');
+    const elVendors = document.getElementById('ownerKpiVendors');
+    const elAdmins = document.getElementById('ownerKpiAdmins');
+    const elOwner = document.getElementById('ownerKpiOwner');
+
+    if (elTotal) elTotal.textContent = totalUsers;
+    if (elCustomers) elCustomers.textContent = customers;
+    if (elVendors) elVendors.textContent = vendors;
+    if (elAdmins) elAdmins.textContent = admins;
+    if (elOwner) elOwner.textContent = `${owners} (vkg)`;
+
+    renderOwnerUsersTable(users);
+  } catch (err) {
+    showToast(`Failed to load owner accounts: ${err.message}`, 'error');
+  }
+}
+
+function renderOwnerUsersTable(users) {
+  const tbody = document.getElementById('ownerUsersTableBody');
+  if (!tbody) return;
+
+  if (users.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-6 text-center text-gray-400">No users found.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = users
+    .map((u) => {
+      const isOwner = u.role === 'owner';
+      const roleBadge = isOwner
+        ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-300 inline-flex items-center"><i class="fa-solid fa-crown text-amber-500 mr-1"></i> Owner</span>`
+        : u.role === 'admin'
+        ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">Admin</span>`
+        : u.role === 'vendor'
+        ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-900 border border-blue-300">Vendor</span>`
+        : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-800 border border-gray-300">Customer</span>`;
+
+      const statusBadge = u.isActive
+        ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800">Active</span>`
+        : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">Disabled</span>`;
+
+      const actionControl = isOwner
+        ? `<span class="px-2.5 py-1 text-xs font-semibold text-purple-800 bg-purple-50 rounded border border-purple-200 inline-flex items-center"><i class="fa-solid fa-lock text-[10px] mr-1 text-purple-600"></i> Primary Owner</span>`
+        : `
+          <div class="flex items-center justify-end space-x-1.5">
+            <span class="text-[11px] text-gray-400 font-medium mr-1">Switch to:</span>
+            <select
+              onchange="handleToggleUserRole('${u._id}', this.value)"
+              class="px-2 py-1 text-xs font-medium border border-gray-300 rounded bg-white text-gray-800 hover:border-purple-500 focus:outline-none focus:border-purple-600 cursor-pointer shadow-xs"
+            >
+              <option value="customer" ${u.role === 'customer' ? 'selected' : ''}>Customer</option>
+              <option value="vendor" ${u.role === 'vendor' ? 'selected' : ''}>Vendor</option>
+              <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+            </select>
+          </div>
+        `;
+
+      return `
+        <tr class="hover:bg-gray-50 transition">
+          <td class="px-4 py-2.5 font-bold text-xs text-gray-900">
+            ${u.name} ${isOwner ? '<span class="text-[10px] text-purple-700 font-bold ml-1">(You)</span>' : ''}
+          </td>
+          <td class="px-4 py-2.5 text-xs text-gray-500 font-mono">${u.email}</td>
+          <td class="px-4 py-2.5">${roleBadge}</td>
+          <td class="px-4 py-2.5">${statusBadge}</td>
+          <td class="px-4 py-2.5 text-xs text-gray-400">${new Date(u.createdAt).toLocaleDateString()}</td>
+          <td class="px-4 py-2.5 text-right">${actionControl}</td>
+        </tr>
+      `;
+    })
+    .join('');
+}
+
+async function handleToggleUserRole(userId, newRole) {
+  if (!state.currentUser || state.currentUser.role !== 'owner') {
+    showToast('Only the system owner (vkg) is authorized to toggle user roles.', 'error');
+    return;
+  }
+
+  try {
+    const res = await api.updateUserRole(userId, newRole);
+    showToast(`Role for "${res.data.data.name}" updated to ${newRole.toUpperCase()}!`, 'success');
+    await loadOwnerData();
+    if (state.activeTab === 'admin-panel') {
+      await loadAdminData();
+    }
+  } catch (err) {
+    showToast(`Failed to update role: ${err.message}`, 'error');
+    await loadOwnerData();
+  }
+}
+
+function filterOwnerTable() {
+  const query = (document.getElementById('ownerSearchInput')?.value || '').toLowerCase().trim();
+  if (!query) {
+    renderOwnerUsersTable(ownerUsersCache);
+    return;
+  }
+  const filtered = ownerUsersCache.filter(
+    (u) =>
+      u.name.toLowerCase().includes(query) ||
+      u.email.toLowerCase().includes(query) ||
+      u.role.toLowerCase().includes(query)
+  );
+  renderOwnerUsersTable(filtered);
 }
 
 // Category Creation

@@ -29,8 +29,8 @@ const UserSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: {
-        values: ['customer', 'vendor', 'admin'],
-        message: 'Role must be customer, vendor, or admin',
+        values: ['customer', 'vendor', 'admin', 'owner'],
+        message: 'Role must be customer, vendor, admin, or owner',
       },
       default: 'customer',
     },
@@ -59,6 +59,20 @@ const UserSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Enforce single-owner constraint: Only one user in the database can have role 'owner'
+UserSchema.pre('validate', async function (next) {
+  if (this.isModified('role') && this.role === 'owner') {
+    const existingOwner = await mongoose.model('User').findOne({
+      role: 'owner',
+      _id: { $ne: this._id },
+    });
+    if (existingOwner) {
+      return next(new Error('Only one owner account is permitted in the system.'));
+    }
+  }
+  next();
+});
 
 // Hash password before saving (Unit 4 Lecture 33 - bcrypt)
 UserSchema.pre('save', async function (next) {

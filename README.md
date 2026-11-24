@@ -218,37 +218,40 @@ npm run test:verify
 
 ## Section D: Actors / User Roles
 
-ShopSphere features **three distinct user actors**, each with isolated authorization boundaries and operational scopes:
+ShopSphere features **four distinct user actors** structured in a clear hierarchical governance model:
 
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        Actor Permission Matrix                         │
-├─────────────────────────┬───────────────┬──────────────┬───────────────┤
-│ Capability / Resource   │ Customer/User │ Seller/Vendor│ Administrator │
-├─────────────────────────┼───────────────┼──────────────┼───────────────┤
-│ Browse & Search Catalog │       ✅      │      ✅      │       ✅      │
-│ Place Orders            │       ✅      │      ❌      │       ✅      │
-│ View Personal Orders    │       ✅      │      ❌      │       ✅      │
-│ Submit Product Reviews  │       ✅      │      ❌      │       ✅      │
-│ Cancel Pending Order    │       ✅      │      ❌      │       ✅      │
-│ Create Products         │       ❌      │      ✅      │       ✅      │
-│ Update Own Products     │       ❌      │      ✅      │       ✅      │
-│ Delete Own Products     │       ❌      │      ✅      │       ✅      │
-│ View Vendor Orders      │       ❌      │      ✅      │       ✅      │
-│ Update Order Shipment   │       ❌      │      ✅      │       ✅      │
-│ View Vendor Earnings    │       ❌      │      ✅      │       ❌      │
-│ Manage User Roles       │       ❌      │      ❌      │       ✅      │
-│ Deactivate Accounts     │       ❌      │      ❌      │       ✅      │
-│ Manage Categories       │       ❌      │      ❌      │       ✅      │
-│ Audit Master Orders     │       ❌      │      ❌      │       ✅      │
-│ View Platform Financials│       ❌      │      ❌      │       ✅      │
-└─────────────────────────┴───────────────┴──────────────┴───────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                               Actor Permission Matrix                                  │
+├─────────────────────────┬───────────────┬──────────────┬───────────────┬───────────────┤
+│ Capability / Resource   │ Customer/User │ Seller/Vendor│ Administrator │ System Owner  │
+│                         │               │              │               │ (vkg - Only 1)│
+├─────────────────────────┼───────────────┼──────────────┼───────────────┼───────────────┤
+│ Browse & Search Catalog │       ✅      │      ✅      │       ✅      │       ✅      │
+│ Place Orders            │       ✅      │      ❌      │       ✅      │       ✅      │
+│ View Personal Orders    │       ✅      │      ❌      │       ✅      │       ✅      │
+│ Submit Product Reviews  │       ✅      │      ❌      │       ✅      │       ✅      │
+│ Cancel Pending Order    │       ✅      │      ❌      │       ✅      │       ✅      │
+│ Create Products         │       ❌      │      ✅      │       ✅      │       ✅      │
+│ Update Own Products     │       ❌      │      ✅      │       ✅      │       ✅      │
+│ Delete Own Products     │       ❌      │      ✅      │       ✅      │       ✅      │
+│ View Vendor Orders      │       ❌      │      ✅      │       ✅      │       ✅      │
+│ Update Order Shipment   │       ❌      │      ✅      │       ✅      │       ✅      │
+│ View Vendor Earnings    │       ❌      │      ✅      │       ❌      │       ✅      │
+│ Deactivate Accounts     │       ❌      │      ❌      │       ✅      │       ✅      │
+│ Manage Categories       │       ❌      │      ❌      │       ✅      │       ✅      │
+│ Audit Master Orders     │       ❌      │      ❌      │       ✅      │       ✅      │
+│ View Platform Financials│       ❌      │      ❌      │       ✅      │       ✅      │
+│ Toggle / Change Roles   │       ❌      │      ❌      │       ❌      │       ✅      │
+│ Access Owner Panel      │       ❌      │      ❌      │       ❌      │       ✅      │
+└─────────────────────────┴───────────────┴──────────────┴───────────────┴───────────────┘
 ```
 
 ### 1. Identified Actors
-1. **User / Customer (`customer`):** The standard consumer actor who signs up, browses products, maintains a persistent cart, submits orders with delivery addresses, tracks shipments, cancels pending orders, and reviews purchased goods.
-2. **Seller / Vendor (`vendor`):** The merchant actor who manages an independent storefront. Vendors list products, configure inventory stock levels, monitor sales analytics, and update order statuses (`Processing`, `Shipped`, `Delivered`) for items in their catalog.
-3. **Administrator (`admin`):** The governance actor with unrestricted supervisory access across the system. The Admin can create/edit categories, modify user roles, audit any order, and review high-level platform revenue statistics.
+1. **System Owner (`owner` - strictly one person: `vkg`):** The single, supreme governance actor. The system enforces that only one owner account can exist in the database. The Owner has exclusive access to the **Owner Panel** and is the **only actor authorized to toggle or assign user roles** (promoting or demoting users between Customer, Vendor, and Admin).
+2. **Administrator (`admin`):** The marketplace operations manager. The Admin manages product categories, audits platform-wide orders, views system KPI metrics, and moderates content. Administrators do **not** have role toggling privileges.
+3. **Seller / Vendor (`vendor`):** The merchant actor managing an independent storefront. Vendors list products, configure stock levels, monitor sales analytics, and update order statuses (`Processing`, `Shipped`) for items in their catalog.
+4. **User / Customer (`customer`):** The consumer actor who signs up, browses products, maintains a persistent cart, submits orders with delivery addresses, tracks shipments, cancels pending orders, and reviews purchased goods.
 
 ---
 
@@ -600,19 +603,59 @@ ShopSphere features **three distinct user actors**, each with isolated authoriza
 
 ---
 
+### 4. Actor: System Owner (`vkg`)
+
+#### Endpoints Summary
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|---|
+| `PUT` | `/api/users/:id/role` | Toggle/assign role to any user (`customer`, `vendor`, `admin`) | Yes (Headers: `x-user-id: <vkg_id>`, `role: owner`) |
+| `GET` | `/api/users` | Audit all system accounts with current roles | Yes (Headers: `x-user-id: <vkg_id>`, `role: owner`) |
+| `GET` | `/api/stats/admin` | Full system revenue, orders, and KPI statistics | Yes (Headers: `x-user-id: <vkg_id>`, `role: owner`) |
+
+---
+
+#### Detailed Endpoint Specifications
+
+##### 4.1 Toggle User Role (Owner Only)
+* **Endpoint:** `PUT /api/users/:id/role`
+* **Purpose:** Allows the System Owner (`vkg`) to change any user's role directly from the Owner Panel. Non-owners (including Admins) attempting this endpoint receive `403 Forbidden`. The system enforces that only one owner can exist.
+* **Headers:** `x-user-id: <vkg_id>`, `role: owner`, `Content-Type: application/json`
+* **Request Body:**
+```json
+{
+  "role": "vendor"
+}
+```
+* **Expected Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "message": "User role successfully updated to vendor",
+  "data": {
+    "_id": "6742fe5a4b51a89012345678",
+    "name": "Vibhash Kumar",
+    "email": "customer@shopsphere.com",
+    "role": "vendor"
+  }
+}
+```
+
+---
+
 ## Demo Credentials
 
 The platform includes seed accounts ready for live evaluation:
 
 | Role | Email | Password | Display Name | Permissions |
 |---|---|---|---|---|
-| **Platform Administrator** | `admin@shopsphere.com` | `adminpassword123` | System Admin | Full system governance, user roles, master orders, categories |
+| **System Owner (vkg)** | `vkg@shopsphere.com` | `vkgpassword123` | vkg | Single-owner role, exclusive role-toggling permissions via Owner Panel, supervisory platform access |
+| **Platform Administrator** | `admin@shopsphere.com` | `adminpassword123` | System Admin | Platform operations, category taxonomy, master orders inspection, platform stats |
 | **Seller / Vendor 1** | `vendor.tech@shopsphere.com` | `vendorpassword123` | Apex Tech Retailers | Electronics inventory, stock updates, fulfillment, earnings |
 | **Seller / Vendor 2** | `vendor.vogue@shopsphere.com` | `vendorpassword123` | Urban Vogue Apparel | Apparel & fashion catalog, shipment processing |
 | **User / Customer 1** | `customer@shopsphere.com` | `customerpassword123` | Vibhash Kumar | Browse marketplace, place orders, write reviews, order tracking |
 | **User / Customer 2** | `priya@example.com` | `customerpassword123` | Priya Sharma | Standard consumer checkout, cancellation of orders |
 
-> **Pro-Tip for Evaluators:** You can click the **Quick Demo Switcher** buttons at the top of the web UI to instantly switch personas (Admin, Tech Vendor, Vogue Vendor, Customer, or Guest) without manually typing credentials!
+> **Pro-Tip for Evaluators:** You can click the **Quick Demo Switcher** buttons at the top of the web UI to instantly switch personas (**Owner (vkg)**, Admin, Tech Vendor, Vogue Vendor, Customer, or Guest) without manually typing credentials! Notice that logging in as **Owner (vkg)** reveals the **Owner Panel** with real-time role toggling controls!
 
 ---
 

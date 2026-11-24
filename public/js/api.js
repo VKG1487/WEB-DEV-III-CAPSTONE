@@ -198,6 +198,13 @@ const api = {
     });
   },
 
+  updateUserRole(id, role) {
+    return this.request(`/users/${id}/role`, {
+      method: 'PUT',
+      body: { role },
+    });
+  },
+
   deleteUser(id) {
     return this.request(`/users/${id}`, {
       method: 'DELETE',

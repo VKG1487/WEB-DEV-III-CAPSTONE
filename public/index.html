@@ -22,6 +22,9 @@
       <span class="hidden sm:inline text-slate-400">Quick Persona Switcher:</span>
     </div>
     <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+      <button onclick="quickLogin('vkg@shopsphere.com', 'vkgpassword123')" class="px-2.5 py-1 rounded bg-purple-900 hover:bg-purple-800 text-purple-100 font-medium border border-purple-700 transition">
+        <i class="fa-solid fa-crown text-amber-300 mr-1"></i> Owner (vkg)
+      </button>
       <button onclick="quickLogin('admin@shopsphere.com', 'adminpassword123')" class="px-2.5 py-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-100 font-medium border border-slate-600 transition">
         <i class="fa-solid fa-user-shield text-amber-400 mr-1"></i> Admin
       </button>
@@ -68,6 +71,9 @@
           </button>
           <button onclick="switchTab('admin-panel')" class="nav-btn px-3.5 py-2 rounded text-sm font-medium transition hidden" data-tab="admin-panel" id="adminTabBtn">
             <i class="fa-solid fa-user-shield mr-1.5 text-amber-600"></i> Admin Panel
+          </button>
+          <button onclick="switchTab('owner-panel')" class="nav-btn px-3.5 py-2 rounded text-sm font-medium transition hidden" data-tab="owner-panel" id="ownerTabBtn">
+            <i class="fa-solid fa-crown mr-1.5 text-purple-600"></i> Owner Panel
           </button>
           <button onclick="switchTab('api-explorer')" class="nav-btn px-3.5 py-2 rounded text-sm font-medium transition text-blue-700 hover:bg-blue-50" data-tab="api-explorer">
             <i class="fa-solid fa-terminal mr-1.5"></i> API Explorer
@@ -325,6 +331,10 @@
 
         <!-- Subtab 1: Users Table -->
         <div id="admin-subtab-users" class="admin-view-sub">
+          <div class="mb-3 text-[11px] text-slate-600 bg-slate-50 border border-slate-200 rounded p-2.5 flex items-center space-x-2">
+            <i class="fa-solid fa-lock text-purple-700"></i>
+            <span><strong>Role Governance Notice:</strong> Role assignments are strictly restricted to the <strong>System Owner (vkg)</strong> via the Owner Panel. Administrators have read-only visibility into roles.</span>
+          </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs text-gray-600">
               <thead class="bg-gray-100 text-gray-700 uppercase font-semibold border-b border-gray-200">
@@ -334,7 +344,7 @@
                   <th class="px-4 py-2.5">Role</th>
                   <th class="px-4 py-2.5">Account Status</th>
                   <th class="px-4 py-2.5">Joined Date</th>
-                  <th class="px-4 py-2.5 text-right">Actions</th>
+                  <th class="px-4 py-2.5 text-right">Role Governance</th>
                 </tr>
               </thead>
               <tbody id="adminUsersTableBody" class="divide-y divide-gray-200">
@@ -377,6 +387,97 @@
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW: OWNER CONTROL PANEL (EXCLUSIVE TO VKG) -->
+    <section id="view-owner-panel" class="tab-view hidden space-y-5">
+      <div class="flex flex-col md:flex-row md:items-center justify-between bg-white p-4 rounded-lg border border-purple-200 shadow-sm gap-3">
+        <div>
+          <div class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded bg-purple-100 text-purple-800 text-[11px] font-bold border border-purple-200 mb-1">
+            <i class="fa-solid fa-crown text-amber-500 mr-1"></i> Single-Owner Governance Mode
+          </div>
+          <h2 class="text-xl font-bold text-gray-900 flex items-center">
+            <i class="fa-solid fa-crown text-purple-700 mr-2"></i> System Owner Control Panel
+          </h2>
+          <p class="text-xs text-gray-500 mt-0.5">
+            Logged in as: <span class="font-bold text-purple-700">vkg</span> (Primary System Owner). Exclusive authority to toggle user roles (Customer, Vendor, Admin) across the platform.
+          </p>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="loadOwnerData()" class="px-3 py-1.5 rounded bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-semibold border border-purple-200 transition">
+            <i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh Accounts
+          </button>
+        </div>
+      </div>
+
+      <!-- Notice Banner -->
+      <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 text-xs text-purple-900 flex items-start space-x-2.5">
+        <i class="fa-solid fa-shield-halved text-purple-600 mt-0.5 text-sm"></i>
+        <div>
+          <span class="font-bold">Privilege Boundary:</span> Only the System Owner (<span class="font-mono font-semibold">vkg</span>) has authorization to change or toggle user roles via this panel. Platform Administrators, Merchants, and Customers have zero role modification privileges.
+        </div>
+      </div>
+
+      <!-- Owner KPI Stats Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4" id="ownerKpiGrid">
+        <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+          <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Total Accounts</div>
+          <div class="text-2xl font-bold text-gray-900 mt-1" id="ownerKpiTotal">0</div>
+        </div>
+        <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+          <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Customers</div>
+          <div class="text-2xl font-bold text-emerald-700 mt-1" id="ownerKpiCustomers">0</div>
+        </div>
+        <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+          <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Vendors</div>
+          <div class="text-2xl font-bold text-blue-700 mt-1" id="ownerKpiVendors">0</div>
+        </div>
+        <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+          <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Administrators</div>
+          <div class="text-2xl font-bold text-amber-700 mt-1" id="ownerKpiAdmins">0</div>
+        </div>
+        <div class="bg-white rounded-lg p-4 border border-purple-200 bg-purple-50/50 shadow-sm">
+          <div class="text-[11px] font-semibold text-purple-800 uppercase tracking-wider">System Owner</div>
+          <div class="text-2xl font-bold text-purple-900 mt-1" id="ownerKpiOwner">1 (vkg)</div>
+        </div>
+      </div>
+
+      <!-- Owner User Management Table -->
+      <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4 space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h4 class="font-bold text-gray-800 text-sm">User Role Governance</h4>
+            <p class="text-xs text-gray-500">Toggle any user's role directly using the role selector</p>
+          </div>
+          <div class="flex items-center space-x-2 w-full sm:w-auto">
+            <input
+              type="text"
+              id="ownerSearchInput"
+              oninput="filterOwnerTable()"
+              placeholder="Filter by name, email, or role..."
+              class="w-full sm:w-64 px-3 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:border-purple-600"
+            />
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-gray-600">
+            <thead class="bg-gray-100 text-gray-700 uppercase font-semibold border-b border-gray-200">
+              <tr>
+                <th class="px-4 py-2.5">User Name</th>
+                <th class="px-4 py-2.5">Email</th>
+                <th class="px-4 py-2.5">Current Role</th>
+                <th class="px-4 py-2.5">Status</th>
+                <th class="px-4 py-2.5">Joined Date</th>
+                <th class="px-4 py-2.5 text-right">Role Toggle (Owner Action)</th>
+              </tr>
+            </thead>
+            <tbody id="ownerUsersTableBody" class="divide-y divide-gray-200">
+              <!-- Dynamically injected -->
+            </tbody>
+          </table>
         </div>
       </div>
     </section>

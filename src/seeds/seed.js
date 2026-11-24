@@ -25,6 +25,20 @@ const seedData = async () => {
     // 1. Create Users
     const users = await User.create([
       {
+        name: 'vkg',
+        email: 'vkg@shopsphere.com',
+        password: 'vkgpassword123',
+        role: 'owner',
+        phone: '+91 9999900001',
+        address: {
+          street: 'HQ Executive Boulevard, Cyber City',
+          city: 'Gurugram',
+          state: 'Haryana',
+          postalCode: '122002',
+          country: 'India',
+        },
+      },
+      {
         name: 'System Admin',
         email: 'admin@shopsphere.com',
         password: 'adminpassword123',
@@ -383,10 +397,11 @@ const seedData = async () => {
     console.log('=======================================================');
     console.log(' SEEDING COMPLETED SUCCESSFULLY!');
     console.log(' Pre-configured Demo Accounts:');
-    console.log(' 1. Admin:    admin@shopsphere.com     / adminpassword123');
-    console.log(' 2. Vendor 1: vendor.tech@shopsphere.com / vendorpassword123');
-    console.log(' 3. Vendor 2: vendor.vogue@shopsphere.com/ vendorpassword123');
-    console.log(' 4. Customer: customer@shopsphere.com  / customerpassword123');
+    console.log(' 1. Owner:    vkg@shopsphere.com       / vkgpassword123 (vkg)');
+    console.log(' 2. Admin:    admin@shopsphere.com     / adminpassword123');
+    console.log(' 3. Vendor 1: vendor.tech@shopsphere.com / vendorpassword123');
+    console.log(' 4. Vendor 2: vendor.vogue@shopsphere.com/ vendorpassword123');
+    console.log(' 5. Customer: customer@shopsphere.com  / customerpassword123');
     console.log('=======================================================');
 
     process.exit(0);
