@@ -22,3 +22,4 @@ router
   .delete(protect, authorize('admin'), deleteCategory);
 
 module.exports = router;
+

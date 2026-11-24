@@ -34,3 +34,4 @@ router.put('/:id/status', protect, authorize('vendor', 'admin'), updateOrderStat
 router.put('/:id/cancel', protect, authorize('customer', 'admin'), cancelOrder);
 
 module.exports = router;
+

@@ -1511,3 +1511,4 @@ async function executeApiRequest() {
     btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-1.5"></i> Send Request';
   }
 }
+

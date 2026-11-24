@@ -32,3 +32,4 @@ router
 router.post('/:id/reviews', protect, authorize('customer', 'admin'), addProductReview);
 
 module.exports = router;
+

@@ -28,3 +28,4 @@ router.route('/').get(getUsers);
 router.route('/:id').get(getUser).put(updateUser).delete(deleteUser);
 
 module.exports = router;
+

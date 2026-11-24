@@ -149,3 +149,4 @@ exports.updatePassword = asyncHandler(async (req, res, next) => {
 
   sendTokenResponse(user, 200, res, 'Password updated successfully');
 });
+

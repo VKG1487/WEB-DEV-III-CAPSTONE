@@ -8,3 +8,4 @@ router.get('/admin', protect, authorize('admin'), getAdminStats);
 router.get('/vendor', protect, authorize('vendor'), getVendorStats);
 
 module.exports = router;
+

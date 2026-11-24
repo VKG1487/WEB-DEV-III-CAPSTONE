@@ -113,3 +113,4 @@ exports.deleteCategory = asyncHandler(async (req, res, next) => {
     data: {},
   });
 });
+
