@@ -2,6 +2,7 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const requestLogger = require('./middleware/logger');
 const errorHandler = require('./middleware/error');
 
 // Import route files
@@ -21,10 +22,11 @@ app.use(express.urlencoded({ extended: true }));
 // Enable CORS
 app.use(cors());
 
-// Dev logging middleware
+// Dev logging middleware (Morgan + Custom Middleware Chaining)
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+app.use(requestLogger);
 
 // Serve static frontend assets
 app.use(express.static(path.join(__dirname, '../public')));

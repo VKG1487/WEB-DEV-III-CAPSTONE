@@ -226,6 +226,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadProducts();
   renderApiExplorerEndpoints();
   selectApiEndpoint(0);
+
+  // Initialize Socket.IO connection (Unit 4 Lecture 39-40 WebSockets & Real-Time Messaging)
+  if (typeof io !== 'undefined') {
+    const socket = io();
+    socket.on('order:created', (data) => {
+      showToast(`Real-Time Alert: New order placed by ${data.customer} (₹${data.totalPrice.toLocaleString('en-IN')})`, 'info');
+      if (state.activeTab === 'admin-panel') loadAdminData();
+      if (state.activeTab === 'vendor-portal') loadVendorData();
+    });
+
+    socket.on('order:status_updated', (data) => {
+      showToast(`Real-Time Alert: Order ${data.orderCode} status updated to "${data.orderStatus}"`, 'info');
+      if (state.activeTab === 'my-orders') loadMyOrders();
+      if (state.activeTab === 'vendor-portal') loadVendorData();
+      if (state.activeTab === 'admin-panel') loadAdminData();
+    });
+
+    socket.on('product:stock_alert', (data) => {
+      if (state.currentUser && (state.currentUser.role === 'vendor' || state.currentUser.role === 'admin')) {
+        showToast(`Low Stock Alert: "${data.title}" has only ${data.stock} units left!`, 'error');
+      }
+    });
+  }
 });
 
 // Toast notification helper

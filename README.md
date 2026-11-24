@@ -15,7 +15,8 @@
    - [Proposed Solution Overview](#1-proposed-solution-overview)
    - [Key Features & Capabilities](#2-key-features--capabilities)
    - [Technology Stack Matrix](#3-technology-stack-matrix)
-   - [Architectural Implementation](#4-architectural-implementation)
+   - [Architectural Implementation (MVC Pattern)](#4-architectural-implementation-mvc-pattern)
+   - [Web Development 3 Curriculum Mapping](#5-web-development-3-curriculum-mapping)
 3. [Section C: How to Run the Application](#section-c-how-to-run-the-application)
    - [Prerequisites & System Requirements](#1-prerequisites--system-requirements)
    - [Repository Cloning](#2-repository-cloning)
@@ -94,9 +95,9 @@ The solution integrates:
 ```
                            ┌───────────────────────────┐
                            │   Client Application UI   │
-                           │  (Marketplace / Portals)  │
+                           │     (View Layer / SPA)    │
                            └─────────────┬─────────────┘
-                                         │ HTTP / JSON
+                                         │ HTTP / REST / WebSockets
                                          ▼
                            ┌───────────────────────────┐
                            │     Express Router        │
@@ -123,6 +124,16 @@ The solution integrates:
                            └───────────────────────────┘
 ```
 
+### 5. Web Development 3 Curriculum Mapping
+The application is intentionally designed to incorporate **only the concepts, technologies, and features covered in Web Development 3**, strictly following the Model-View-Controller (MVC) architecture without unnecessary external bloat:
+
+| Curriculum Unit | Topics Covered in Syllabus | How Implemented in This Project | Source File Location |
+|---|---|---|---|
+| **Unit 1: Node.js Core** | Node.js Runtime & NPM, CommonJS Modules, Core Modules (`http`, `path`, `events`), Process & CLI arguments | HTTP Server instantiation with `http.createServer()`, `path.join()`, process arguments in seeder (`process.argv`), CommonJS `require`/`module.exports` | `src/server.js`, `src/seeds/seed.js` |
+| **Unit 2: Express & MVC** | Express.js, Request & Response, MVC Architecture, REST CRUD, Middleware Chaining, Error Handling | Strict MVC folder structure (`models/`, `controllers/`, `routes/`, `views`), Express `Router()`, custom `requestLogger` middleware chaining, centralized Mongoose error handler | `src/app.js`, `src/controllers/*`, `src/routes/*`, `src/middleware/logger.js`, `src/middleware/error.js` |
+| **Unit 3: MongoDB & Mongoose** | Databases, MongoDB Atlas/Local, Mongoose ODM, Schemas, Built-in/Custom Validators, Relationships (`ref`/`populate`), Queries, Aggregation, Text Indexing | MongoDB connection with Mongoose, schemas with validators (`enum`, `min`, `max`, `match`), cross-collection references (`ObjectId`, `ref`), compound text search indexes, aggregation pipeline for revenue & ratings | `src/config/db.js`, `src/models/*`, `src/controllers/statsController.js` |
+| **Unit 4: Security & Real-Time** | Environment variables (`dotenv`), Password Hashing (`bcrypt`), JWT Auth, Protected Routes, RBAC, EventEmitter, WebSockets & Socket.IO | `.env` configuration, bcrypt salt rounds on pre-save, signed JWT tokens, `protect` & `authorize` RBAC middleware, custom Node.js `EventEmitter` for business events, Socket.IO real-time order alerts | `src/middleware/auth.js`, `src/utils/eventEmitter.js`, `src/server.js`, `public/js/app.js` |
+
 ---
 
 ## Section C: How to Run the Application
@@ -139,7 +150,7 @@ Ensure the following tools are installed on your machine:
 ### 2. Repository Cloning
 Clone the repository to your local workspace:
 ```bash
-git clone https://github.com/vibhashkumargiri/WEB-DEV-III-CAPSTONE.git
+git clone https://github.com/VKG1487/WEB-DEV-III-CAPSTONE.git
 cd WEB-DEV-III-CAPSTONE
 ```
 

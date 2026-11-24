@@ -1,6 +1,7 @@
 const asyncHandler = require('../utils/asyncHandler');
 const ErrorResponse = require('../utils/errorResponse');
 const User = require('../models/User');
+const appEvents = require('../utils/eventEmitter');
 
 // Helper function to send token in response
 const sendTokenResponse = (user, statusCode, res, message = 'Success') => {
@@ -54,6 +55,8 @@ exports.register = asyncHandler(async (req, res, next) => {
   }
 
   const user = await User.create(userData);
+
+  appEvents.emit('user:registered', user);
 
   sendTokenResponse(user, 201, res, 'User registered successfully');
 });

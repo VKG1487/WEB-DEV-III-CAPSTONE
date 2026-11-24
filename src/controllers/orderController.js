@@ -2,6 +2,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const ErrorResponse = require('../utils/errorResponse');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const appEvents = require('../utils/eventEmitter');
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -72,6 +73,11 @@ exports.createOrder = asyncHandler(async (req, res, next) => {
     product.stock -= quantity;
     await product.save();
 
+    // Trigger stock alert event if low (Lecture 38 EventEmitter)
+    if (product.stock <= 5) {
+      appEvents.emit('product:stock_alert', product);
+    }
+
     const itemTotal = product.price * quantity;
     calculatedItemsPrice += itemTotal;
 
@@ -103,6 +109,9 @@ exports.createOrder = asyncHandler(async (req, res, next) => {
     orderStatus: 'Pending',
     notes: notes || '',
   });
+
+  // Emit order created event (Lecture 38 & 40)
+  appEvents.emit('order:created', order);
 
   res.status(201).json({
     success: true,
@@ -261,6 +270,14 @@ exports.updateOrderStatus = asyncHandler(async (req, res, next) => {
 
   order.orderStatus = status;
   await order.save();
+
+  // Emit status updated event (Lecture 38 & 40)
+  appEvents.emit('order:status_updated', {
+    orderId: order._id,
+    orderCode: order.orderCode,
+    orderStatus: order.orderStatus,
+    customer: order.customer,
+  });
 
   res.status(200).json({
     success: true,
