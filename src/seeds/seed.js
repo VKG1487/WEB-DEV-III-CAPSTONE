@@ -9,10 +9,12 @@ const Product = require('../models/Product');
 const Order = require('../models/Order');
 const Review = require('../models/Review');
 
-const seedData = async () => {
+const seedData = async (shouldExit = true) => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log('[Seeder] Connected to MongoDB database...');
+    if (mongoose.connection.readyState === 0) {
+      await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/shopsphere_db');
+      console.log('[Seeder] Connected to MongoDB database...');
+    }
 
     // Clear existing collections
     await User.deleteMany();
@@ -404,32 +406,50 @@ const seedData = async () => {
     console.log(' 5. Customer: customer@shopsphere.com  / customerpassword123');
     console.log('=======================================================');
 
-    process.exit(0);
+    if (shouldExit) {
+      process.exit(0);
+    }
+    return { users, categories, products };
   } catch (error) {
     console.error(`[Seeder Error]: ${error.message}`);
-    process.exit(1);
+    if (shouldExit) {
+      process.exit(1);
+    }
+    throw error;
   }
 };
 
-const destroyData = async () => {
+const destroyData = async (shouldExit = true) => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    if (mongoose.connection.readyState === 0) {
+      await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/shopsphere_db');
+    }
     await User.deleteMany();
     await Category.deleteMany();
     await Product.deleteMany();
     await Order.deleteMany();
     await Review.deleteMany();
     console.log('[Seeder] All database records deleted successfully.');
-    process.exit(0);
+    if (shouldExit) {
+      process.exit(0);
+    }
   } catch (error) {
     console.error(`[Seeder Error]: ${error.message}`);
-    process.exit(1);
+    if (shouldExit) {
+      process.exit(1);
+    }
+    throw error;
   }
 };
 
-if (process.argv[2] === '-d') {
-  destroyData();
-} else {
-  seedData();
+if (require.main === module) {
+  if (process.argv[2] === '-d') {
+    destroyData(true);
+  } else {
+    seedData(true);
+  }
 }
+
+module.exports = seedData;
+module.exports.destroyData = destroyData;
 

@@ -8,6 +8,8 @@ dotenv.config();
 const connectDB = require('./config/db');
 const app = require('./app');
 const appEvents = require('./utils/eventEmitter');
+const User = require('./models/User');
+const seedData = require('./seeds/seed');
 
 const PORT = process.env.PORT || 5000;
 
@@ -15,6 +17,17 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   try {
     await connectDB();
+
+    // Auto-seed initial data if database is empty (guarantees out-of-the-box readiness on any new machine)
+    try {
+      const userCount = await User.countDocuments();
+      if (userCount === 0) {
+        console.log('[Auto-Seed] Empty database detected. Populating demo accounts, products, and categories...');
+        await seedData(false);
+      }
+    } catch (seedErr) {
+      console.warn(`[Auto-Seed Warning]: ${seedErr.message}`);
+    }
 
     // Create HTTP server (Lecture 7)
     const server = http.createServer(app);

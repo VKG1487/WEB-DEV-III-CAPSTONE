@@ -138,9 +138,25 @@ The application is intentionally designed to incorporate **only the concepts, te
 
 ## Section C: How to Run the Application
 
-The instructions below allow any developer to clone, configure, seed, and run the project locally without assistance.
+The instructions below allow any developer to clone, configure, seed, and run the project locally on any machine without assistance.
 
-### 1. Prerequisites & System Requirements
+### Quick Start (Two-Command Zero-Configuration Setup)
+On any machine with Node.js and MongoDB installed, you can clone and run immediately:
+```bash
+git clone https://github.com/VKG1487/WEB-DEV-III-CAPSTONE.git
+cd WEB-DEV-III-CAPSTONE
+npm install
+npm run dev
+```
+
+> **Automated Out-of-the-Box Experience:**
+> * **Automatic `.env` Generation:** Running `npm install` triggers a cross-platform postinstall hook that automatically creates `.env` from `.env.example` if it does not already exist.
+> * **Automatic Database Seeding:** Running `npm run dev` detects if the MongoDB database is empty and automatically runs the seeder in the background, provisioning the System Owner (`vkg`), Administrators, Vendors, Customers, Categories, and Products on the fly.
+> * **Instant Browser Access:** Open [http://localhost:5000](http://localhost:5000) and click **"Owner (vkg)"** or any persona in the top Quick Switcher to begin testing immediately.
+
+---
+
+### Step-by-Step Manual Setup (Optional)
 Ensure the following tools are installed on your machine:
 * **Node.js**: `v18.0.0` or higher (`node -v`)
 * **npm**: `v9.0.0` or higher (`npm -v`)
@@ -206,7 +222,7 @@ Execute the built-in automated test suite (Integration + Edge Cases):
 ```bash
 npm test
 ```
-*Expected test outcome: 11 passing tests verifying system health, multi-role auth, 403 forbidden access restrictions, product queries, order placement, order history retrieval, status updates, stock exhaustion blocks (400), empty items validation (400), admin self-deletion prevention (400), and category deletion safety (400).*
+*Expected test outcome: 16 passing tests verifying system health, multi-role auth, 403 forbidden access restrictions, product queries, order placement, order history retrieval, status updates, stock exhaustion blocks (400), empty items validation (400), admin self-deletion prevention (400), category deletion safety (400), owner authentication (vkg), non-owner role toggle restrictions (403), owner role toggling (200), single-owner rule enforcement (400), and owner deletion protection (400).*
 
 Run the multi-pass end-to-end debug verification script:
 ```bash
