@@ -255,18 +255,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 function showToast(message, type = 'success') {
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
-  const bg = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-indigo-600';
+  const bg = type === 'success' ? 'bg-green-700' : type === 'error' ? 'bg-red-700' : 'bg-blue-700';
   const icon = type === 'success' ? 'fa-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-info';
 
-  toast.className = `toast flex items-center p-3 text-sm text-white ${bg} rounded-xl shadow-lg shadow-black/10`;
+  toast.className = `toast flex items-center p-3 text-xs text-white ${bg} rounded border border-black/10 shadow-md`;
   toast.innerHTML = `<i class="fa-solid ${icon} mr-2"></i> <span>${message}</span>`;
 
   container.appendChild(toast);
   setTimeout(() => {
     toast.style.opacity = '0';
-    toast.style.transform = 'translateY(20px)';
-    toast.style.transition = 'all 0.3s ease';
-    setTimeout(() => toast.remove(), 300);
+    toast.style.transform = 'translateY(10px)';
+    setTimeout(() => toast.remove(), 250);
   }, 3500);
 }
 
@@ -311,7 +310,7 @@ function updateAuthUI() {
 
   if (state.currentUser) {
     const role = state.currentUser.role;
-    const roleBadgeColor = role === 'admin' ? 'bg-amber-100 text-amber-800' : role === 'vendor' ? 'bg-indigo-100 text-indigo-800' : 'bg-emerald-100 text-emerald-800';
+    const roleBadgeColor = role === 'admin' ? 'bg-amber-100 text-amber-800' : role === 'vendor' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800';
 
     authContainer.innerHTML = `
       <div class="flex items-center space-x-2">
@@ -350,7 +349,7 @@ function updateAuthUI() {
       <button onclick="openAuthModal('login')" class="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition">
         Sign In
       </button>
-      <button onclick="openAuthModal('register')" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-sm">
+      <button onclick="openAuthModal('register')" class="px-3.5 py-1.5 rounded text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition shadow-sm">
         Register
       </button>
     `;
@@ -409,7 +408,7 @@ async function loadCategories() {
 
     // Build filter pills
     let html = `
-      <button onclick="filterCategory('')" class="category-pill ${state.selectedCategory === '' ? 'active bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'} px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition">
+      <button onclick="filterCategory('')" class="category-pill ${state.selectedCategory === '' ? 'active bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'} px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap transition">
         All Products
       </button>
     `;
@@ -420,7 +419,7 @@ async function loadCategories() {
     state.categories.forEach((cat) => {
       const isActive = state.selectedCategory === cat.slug;
       html += `
-        <button onclick="filterCategory('${cat.slug}')" class="category-pill ${isActive ? 'active bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'} px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition">
+        <button onclick="filterCategory('${cat.slug}')" class="category-pill ${isActive ? 'active bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'} px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap transition">
           ${cat.name} (${cat.productCount || 0})
         </button>
       `;
@@ -489,17 +488,17 @@ async function loadProducts() {
   }
 }
 
-// Render Products Grid
+// Render Products Grid (Classic Clean Card Design)
 function renderProducts(products) {
   const grid = document.getElementById('productGrid');
 
   if (!products || products.length === 0) {
     grid.innerHTML = `
-      <div class="col-span-full py-16 text-center bg-white rounded-2xl border border-slate-200">
-        <i class="fa-solid fa-box-open text-4xl text-slate-300 mb-3"></i>
-        <h3 class="font-bold text-slate-700">No products match your criteria</h3>
-        <p class="text-xs text-slate-400 mt-1">Try resetting filters or adjusting your search term.</p>
-        <button onclick="filterCategory(''); document.getElementById('searchInput').value='';" class="mt-4 px-4 py-2 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-semibold hover:bg-indigo-100">
+      <div class="col-span-full py-12 text-center bg-white rounded-lg border border-gray-200">
+        <i class="fa-solid fa-box-open text-3xl text-gray-400 mb-2"></i>
+        <h3 class="font-bold text-gray-700 text-sm">No products found</h3>
+        <p class="text-xs text-gray-400 mt-1">Try resetting filters or adjusting your search keyword.</p>
+        <button onclick="filterCategory(''); document.getElementById('searchInput').value='';" class="mt-3 px-3 py-1.5 rounded bg-blue-50 text-blue-700 text-xs font-semibold hover:bg-blue-100 border border-blue-200">
           Reset All Filters
         </button>
       </div>
@@ -512,58 +511,60 @@ function renderProducts(products) {
     const vendorName = p.vendor?.vendorDetails?.storeName || p.vendor?.name || 'Verified Vendor';
 
     return `
-      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col group">
-        <!-- Image & Badges -->
-        <div class="relative aspect-square w-full bg-slate-100 overflow-hidden cursor-pointer" onclick="openProductDetailModal('${p._id}')">
-          <img
-            src="${p.imageUrl}"
-            alt="${p.title}"
-            class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
-            loading="lazy"
-            onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'"
-          />
-          <div class="absolute top-2.5 left-2.5 flex flex-col gap-1">
-            ${p.category?.name ? `<span class="bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded-md text-[10px] font-bold text-slate-700 shadow-sm">${p.category.name}</span>` : ''}
-          </div>
-          <div class="absolute top-2.5 right-2.5">
-            ${inStock
-              ? `<span class="bg-emerald-500/90 text-white px-2 py-0.5 rounded-md text-[10px] font-semibold backdrop-blur-sm">In Stock (${p.stock})</span>`
-              : `<span class="bg-rose-500/90 text-white px-2 py-0.5 rounded-md text-[10px] font-semibold backdrop-blur-sm">Sold Out</span>`
-            }
-          </div>
-        </div>
-
-        <!-- Info & Actions -->
-        <div class="p-4 flex-1 flex flex-col justify-between">
-          <div>
-            <div class="text-[11px] font-medium text-slate-400 mb-1 flex items-center justify-between">
-              <span class="truncate max-w-[140px]"><i class="fa-solid fa-store mr-1 text-slate-300"></i> ${vendorName}</span>
-              <span class="text-amber-500 font-semibold"><i class="fa-solid fa-star text-[10px]"></i> ${p.rating || '4.8'} (${p.numReviews || 12})</span>
+      <div class="bg-white rounded-lg border border-gray-200 shadow-sm hover:border-gray-300 transition overflow-hidden flex flex-col justify-between">
+        <div>
+          <!-- Image & Badges -->
+          <div class="relative aspect-square w-full bg-gray-100 overflow-hidden cursor-pointer border-b border-gray-100" onclick="openProductDetailModal('${p._id}')">
+            <img
+              src="${p.imageUrl}"
+              alt="${p.title}"
+              class="w-full h-full object-cover object-center"
+              loading="lazy"
+              onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'"
+            />
+            <div class="absolute top-2 left-2 flex flex-col gap-1">
+              ${p.category?.name ? `<span class="bg-white px-2 py-0.5 rounded text-[10px] font-bold text-gray-700 border border-gray-200 shadow-sm">${p.category.name}</span>` : ''}
             </div>
-            <h3 class="font-bold text-slate-900 text-sm line-clamp-2 hover:text-indigo-600 transition cursor-pointer" onclick="openProductDetailModal('${p._id}')" title="${p.title}">
+            <div class="absolute top-2 right-2">
+              ${inStock
+                ? `<span class="bg-green-700 text-white px-2 py-0.5 rounded text-[10px] font-semibold">In Stock (${p.stock})</span>`
+                : `<span class="bg-red-700 text-white px-2 py-0.5 rounded text-[10px] font-semibold">Sold Out</span>`
+              }
+            </div>
+          </div>
+
+          <!-- Product Info -->
+          <div class="p-3.5 space-y-1.5">
+            <div class="text-[11px] text-gray-500 flex items-center justify-between">
+              <span class="truncate max-w-[130px]"><i class="fa-solid fa-store mr-1 text-gray-400"></i> ${vendorName}</span>
+              <span class="text-amber-600 font-bold"><i class="fa-solid fa-star text-[10px]"></i> ${p.rating || '4.8'} (${p.numReviews || 0})</span>
+            </div>
+            <h3 class="font-bold text-gray-900 text-xs line-clamp-2 hover:text-blue-700 transition cursor-pointer" onclick="openProductDetailModal('${p._id}')" title="${p.title}">
               ${p.title}
             </h3>
           </div>
+        </div>
 
-          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+        <!-- Price & Action -->
+        <div class="p-3.5 pt-0">
+          <div class="pt-2.5 border-t border-gray-100 flex items-center justify-between">
             <div>
-              <span class="text-xs text-slate-400">Price</span>
-              <div class="text-base font-extrabold text-slate-900">
+              <div class="text-sm font-bold text-gray-900">
                 ₹${p.price.toLocaleString('en-IN')}
-                ${p.comparePrice > p.price ? `<span class="text-xs font-normal text-slate-400 line-through ml-1">₹${p.comparePrice.toLocaleString('en-IN')}</span>` : ''}
+                ${p.comparePrice > p.price ? `<span class="text-[11px] font-normal text-gray-400 line-through ml-1">₹${p.comparePrice.toLocaleString('en-IN')}</span>` : ''}
               </div>
             </div>
 
             <button
               onclick="addToCart('${p._id}')"
               ${!inStock ? 'disabled' : ''}
-              class="px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center shadow-sm ${
+              class="px-3 py-1.5 rounded text-xs font-semibold transition flex items-center ${
                 inStock
-                  ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
-                  : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
               }"
             >
-              <i class="fa-solid fa-cart-plus mr-1.5"></i> Add
+              <i class="fa-solid fa-cart-plus mr-1"></i> Add
             </button>
           </div>
         </div>
@@ -661,7 +662,7 @@ function renderCartDrawer() {
         <i class="fa-solid fa-cart-shopping text-4xl text-slate-300 mb-3"></i>
         <h4 class="font-bold text-slate-700">Your bag is empty</h4>
         <p class="text-xs text-slate-400 mt-1">Explore our marketplace and add some items!</p>
-        <button onclick="toggleCartDrawer(false)" class="mt-4 px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold">
+        <button onclick="toggleCartDrawer(false)" class="mt-4 px-4 py-2 rounded bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700">
           Continue Shopping
         </button>
       </div>
@@ -776,11 +777,11 @@ async function loadMyOrders() {
 
     if (orders.length === 0) {
       container.innerHTML = `
-        <div class="py-16 text-center bg-white rounded-2xl border border-slate-200">
-          <i class="fa-solid fa-receipt text-4xl text-slate-300 mb-3"></i>
-          <h3 class="font-bold text-slate-700">No orders placed yet</h3>
-          <p class="text-xs text-slate-400 mt-1">When you place orders, track them live here.</p>
-          <button onclick="switchTab('marketplace')" class="mt-4 px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold">
+        <div class="py-12 text-center bg-white rounded-lg border border-gray-200">
+          <i class="fa-solid fa-receipt text-3xl text-gray-400 mb-2"></i>
+          <h3 class="font-bold text-gray-700 text-sm">No orders placed yet</h3>
+          <p class="text-xs text-gray-400 mt-1">When you place orders, track them live here.</p>
+          <button onclick="switchTab('marketplace')" class="mt-3 px-3.5 py-1.5 rounded bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700">
             Browse Marketplace
           </button>
         </div>
@@ -790,12 +791,12 @@ async function loadMyOrders() {
 
     container.innerHTML = orders.map((o) => {
       const statusColor = {
-        Pending: 'bg-amber-100 text-amber-800 border-amber-200',
-        Processing: 'bg-sky-100 text-sky-800 border-sky-200',
-        Shipped: 'bg-purple-100 text-purple-800 border-purple-200',
-        Delivered: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-        Cancelled: 'bg-rose-100 text-rose-800 border-rose-200',
-      }[o.orderStatus] || 'bg-slate-100 text-slate-800';
+        Pending: 'bg-amber-100 text-amber-800 border-amber-300',
+        Processing: 'bg-blue-100 text-blue-800 border-blue-300',
+        Shipped: 'bg-purple-100 text-purple-800 border-purple-300',
+        Delivered: 'bg-green-100 text-green-800 border-green-300',
+        Cancelled: 'bg-red-100 text-red-800 border-red-300',
+      }[o.orderStatus] || 'bg-gray-100 text-gray-800';
 
       const dateStr = new Date(o.createdAt).toLocaleDateString('en-IN', {
         day: 'numeric',
@@ -804,36 +805,36 @@ async function loadMyOrders() {
       });
 
       return `
-        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
+        <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 border-b border-gray-100 gap-2">
             <div>
-              <span class="font-mono text-xs font-bold text-slate-900">${o.orderCode}</span>
-              <span class="text-xs text-slate-400 ml-2">Placed on ${dateStr}</span>
+              <span class="font-mono text-xs font-bold text-gray-900">${o.orderCode}</span>
+              <span class="text-xs text-gray-400 ml-2">Placed on ${dateStr}</span>
             </div>
             <div class="flex items-center space-x-2">
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border ${statusColor}">
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold border ${statusColor}">
                 ${o.orderStatus}
               </span>
               ${
                 o.orderStatus === 'Pending'
-                  ? `<button onclick="handleCancelOrder('${o._id}')" class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-semibold transition">Cancel Order</button>`
+                  ? `<button onclick="handleCancelOrder('${o._id}')" class="px-2 py-0.5 rounded bg-red-50 text-red-700 hover:bg-red-100 text-xs font-semibold border border-red-200 transition">Cancel Order</button>`
                   : ''
               }
             </div>
           </div>
 
           <!-- Items in Order -->
-          <div class="divide-y divide-slate-100">
+          <div class="divide-y divide-gray-100">
             ${o.items.map((item) => `
-              <div class="py-2.5 flex items-center justify-between">
+              <div class="py-2 flex items-center justify-between text-xs">
                 <div class="flex items-center space-x-3">
-                  <img src="${item.imageUrl || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'}" class="w-12 h-12 object-cover rounded-lg border border-slate-200" />
+                  <img src="${item.imageUrl || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'}" class="w-10 h-10 object-cover rounded border border-gray-200" />
                   <div>
-                    <h5 class="text-xs font-bold text-slate-800">${item.title}</h5>
-                    <span class="text-[11px] text-slate-500">Qty: ${item.quantity} × ₹${item.price.toLocaleString('en-IN')}</span>
+                    <h5 class="font-bold text-gray-800">${item.title}</h5>
+                    <span class="text-gray-500">Qty: ${item.quantity} × ₹${item.price.toLocaleString('en-IN')}</span>
                   </div>
                 </div>
-                <div class="text-xs font-bold text-slate-900">
+                <div class="font-bold text-gray-900">
                   ₹${(item.price * item.quantity).toLocaleString('en-IN')}
                 </div>
               </div>
@@ -841,13 +842,13 @@ async function loadMyOrders() {
           </div>
 
           <!-- Order Summary Footer -->
-          <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row justify-between text-xs text-slate-600 gap-2 bg-slate-50 -mx-5 -mb-5 p-4 rounded-b-2xl">
+          <div class="pt-2.5 border-t border-gray-100 flex flex-col sm:flex-row justify-between text-xs text-gray-600 gap-2 bg-gray-50 -mx-4 -mb-4 p-3 rounded-b-lg">
             <div>
-              <span class="font-semibold text-slate-700">Delivery Address:</span> ${o.shippingAddress?.address || 'Standard Address'}, ${o.shippingAddress?.city || 'Delhi'}
+              <span class="font-semibold text-gray-700">Delivery Address:</span> ${o.shippingAddress?.address || 'Standard Address'}, ${o.shippingAddress?.city || 'Delhi'}
             </div>
             <div>
-              <span class="text-slate-500">Payment: ${o.paymentMethod} (${o.paymentStatus})</span>
-              <span class="ml-3 font-bold text-sm text-slate-900">Total: ₹${o.totalPrice.toLocaleString('en-IN')}</span>
+              <span class="text-gray-500">Payment: ${o.paymentMethod} (${o.paymentStatus})</span>
+              <span class="ml-3 font-bold text-xs text-gray-900">Total: ₹${o.totalPrice.toLocaleString('en-IN')}</span>
             </div>
           </div>
         </div>
@@ -890,33 +891,37 @@ async function loadVendorData() {
     document.getElementById('vendorProductCount').textContent = `${products.length} catalog items`;
 
     const tableBody = document.getElementById('vendorProductsTableBody');
-    tableBody.innerHTML = products.map((p) => `
-      <tr class="hover:bg-slate-50/60 transition">
-        <td class="px-5 py-3 flex items-center space-x-3">
-          <img src="${p.imageUrl}" class="w-10 h-10 rounded-lg object-cover border border-slate-200" />
-          <div>
-            <div class="font-bold text-xs text-slate-900 line-clamp-1">${p.title}</div>
-            <span class="text-[10px] text-slate-400 font-mono">${p.sku}</span>
-          </div>
-        </td>
-        <td class="px-5 py-3 text-xs text-slate-600">${p.category?.name || 'General'}</td>
-        <td class="px-5 py-3 text-xs font-bold text-slate-900">₹${p.price.toLocaleString('en-IN')}</td>
-        <td class="px-5 py-3 text-xs font-semibold ${p.stock <= 5 ? 'text-amber-600' : 'text-slate-700'}">${p.stock} units</td>
-        <td class="px-5 py-3">
-          <span class="px-2 py-0.5 rounded text-[10px] font-bold ${p.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}">
-            ${p.isActive ? 'Active' : 'Inactive'}
-          </span>
-        </td>
-        <td class="px-5 py-3 text-right space-x-1">
-          <button onclick="openProductModal('${p._id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100">
-            <i class="fa-solid fa-pen-to-square"></i>
-          </button>
-          <button onclick="handleDeleteProduct('${p._id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-slate-100">
-            <i class="fa-solid fa-trash"></i>
-          </button>
-        </td>
-      </tr>
-    `).join('');
+    if (products.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="6" class="px-4 py-6 text-center text-gray-400">No products listed in your inventory yet. Click "Add New Product" to create one.</td></tr>`;
+    } else {
+      tableBody.innerHTML = products.map((p) => `
+        <tr class="hover:bg-gray-50 transition">
+          <td class="px-4 py-2.5 flex items-center space-x-3">
+            <img src="${p.imageUrl}" class="w-9 h-9 rounded object-cover border border-gray-200" />
+            <div>
+              <div class="font-bold text-xs text-gray-900 line-clamp-1">${p.title}</div>
+              <span class="text-[10px] text-gray-400 font-mono">${p.sku}</span>
+            </div>
+          </td>
+          <td class="px-4 py-2.5 text-xs text-gray-600">${p.category?.name || 'General'}</td>
+          <td class="px-4 py-2.5 text-xs font-bold text-gray-900">₹${p.price.toLocaleString('en-IN')}</td>
+          <td class="px-4 py-2.5 text-xs font-semibold ${p.stock <= 5 ? 'text-amber-700' : 'text-gray-700'}">${p.stock} units</td>
+          <td class="px-4 py-2.5">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${p.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}">
+              ${p.isActive ? 'Active' : 'Inactive'}
+            </span>
+          </td>
+          <td class="px-4 py-2.5 text-right space-x-1">
+            <button onclick="openProductModal('${p._id}')" class="p-1 rounded text-gray-500 hover:text-blue-700 hover:bg-gray-100">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button onclick="handleDeleteProduct('${p._id}')" class="p-1 rounded text-gray-500 hover:text-red-700 hover:bg-gray-100">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
 
     // 3. Load Vendor Orders
     const ordersRes = await api.getVendorOrders();
@@ -924,30 +929,34 @@ async function loadVendorData() {
     document.getElementById('vendorOrderCount').textContent = `${orders.length} orders`;
 
     const ordersTable = document.getElementById('vendorOrdersTableBody');
-    ordersTable.innerHTML = orders.map((o) => `
-      <tr class="hover:bg-slate-50/60 transition">
-        <td class="px-5 py-3 font-mono text-xs font-bold text-indigo-600">${o.orderCode}</td>
-        <td class="px-5 py-3 text-xs text-slate-700">
-          <div class="font-bold">${o.customer?.name || 'Customer'}</div>
-          <div class="text-[10px] text-slate-400">${o.customer?.email || ''}</div>
-        </td>
-        <td class="px-5 py-3 text-xs text-slate-600">${o.vendorItems?.length || 1} item(s)</td>
-        <td class="px-5 py-3 text-xs font-bold text-slate-900">₹${(o.vendorSubtotal || o.totalPrice).toLocaleString('en-IN')}</td>
-        <td class="px-5 py-3">
-          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800">
-            ${o.orderStatus}
-          </span>
-        </td>
-        <td class="px-5 py-3 text-right">
-          <select onchange="handleUpdateOrderStatus('${o._id}', this.value)" class="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1">
-            <option value="">Update Status</option>
-            <option value="Processing">Processing</option>
-            <option value="Shipped">Shipped</option>
-            <option value="Delivered">Delivered</option>
-          </select>
-        </td>
-      </tr>
-    `).join('');
+    if (orders.length === 0) {
+      ordersTable.innerHTML = `<tr><td colspan="6" class="px-4 py-6 text-center text-gray-400">No incoming customer orders recorded yet.</td></tr>`;
+    } else {
+      ordersTable.innerHTML = orders.map((o) => `
+        <tr class="hover:bg-gray-50 transition">
+          <td class="px-4 py-2.5 font-mono text-xs font-bold text-blue-700">${o.orderCode}</td>
+          <td class="px-4 py-2.5 text-xs text-gray-700">
+            <div class="font-bold">${o.customer?.name || 'Customer'}</div>
+            <div class="text-[10px] text-gray-400">${o.customer?.email || ''}</div>
+          </td>
+          <td class="px-4 py-2.5 text-xs text-gray-600">${o.vendorItems?.length || 1} item(s)</td>
+          <td class="px-4 py-2.5 text-xs font-bold text-gray-900">₹${(o.vendorSubtotal || o.totalPrice).toLocaleString('en-IN')}</td>
+          <td class="px-4 py-2.5">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-800">
+              ${o.orderStatus}
+            </span>
+          </td>
+          <td class="px-4 py-2.5 text-right">
+            <select onchange="handleUpdateOrderStatus('${o._id}', this.value)" class="text-xs bg-white border border-gray-300 rounded px-2 py-1">
+              <option value="">Status</option>
+              <option value="Processing">Processing</option>
+              <option value="Shipped">Shipped</option>
+              <option value="Delivered">Delivered</option>
+            </select>
+          </td>
+        </tr>
+      `).join('');
+    }
   } catch (err) {
     console.error('Failed to load vendor data', err);
   }
@@ -1053,69 +1062,84 @@ async function loadAdminData() {
     const usersRes = await api.getUsers();
     const users = usersRes.data.data;
     const usersTable = document.getElementById('adminUsersTableBody');
-    usersTable.innerHTML = users.map((u) => `
-      <tr class="hover:bg-slate-50/60 transition">
-        <td class="px-4 py-3 font-bold text-xs text-slate-900">${u.name}</td>
-        <td class="px-4 py-3 text-xs text-slate-500 font-mono">${u.email}</td>
-        <td class="px-4 py-3">
-          <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
-            u.role === 'admin' ? 'bg-amber-100 text-amber-800' : u.role === 'vendor' ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-800'
-          }">
-            ${u.role}
-          </span>
-        </td>
-        <td class="px-4 py-3">
-          <span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
-            ${u.isActive ? 'Active' : 'Disabled'}
-          </span>
-        </td>
-        <td class="px-4 py-3 text-xs text-slate-400">${new Date(u.createdAt).toLocaleDateString()}</td>
-        <td class="px-4 py-3 text-right space-x-1">
-          <button onclick="handleToggleUserRole('${u._id}', '${u.role === 'vendor' ? 'customer' : 'vendor'}')" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">
-            Toggle Role
-          </button>
-        </td>
-      </tr>
-    `).join('');
+    if (users.length === 0) {
+      usersTable.innerHTML = `<tr><td colspan="6" class="px-4 py-6 text-center text-gray-400">No registered users found.</td></tr>`;
+    } else {
+      usersTable.innerHTML = users.map((u) => `
+        <tr class="hover:bg-gray-50 transition">
+          <td class="px-4 py-2.5 font-bold text-xs text-gray-900">${u.name}</td>
+          <td class="px-4 py-2.5 text-xs text-gray-500 font-mono">${u.email}</td>
+          <td class="px-4 py-2.5">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
+              u.role === 'admin' ? 'bg-amber-100 text-amber-800' : u.role === 'vendor' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+            }">
+              ${u.role}
+            </span>
+          </td>
+          <td class="px-4 py-2.5">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+              ${u.isActive ? 'Active' : 'Disabled'}
+            </span>
+          </td>
+          <td class="px-4 py-2.5 text-xs text-gray-400">${new Date(u.createdAt).toLocaleDateString()}</td>
+          <td class="px-4 py-2.5 text-right space-x-1">
+            <button onclick="handleToggleUserRole('${u._id}', '${u.role === 'vendor' ? 'customer' : 'vendor'}')" class="px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold border border-gray-300">
+              Toggle Role
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
 
     // 3. Categories Grid
+    if (!state.categories || state.categories.length === 0) {
+      await loadCategories();
+    }
     const catGrid = document.getElementById('adminCategoriesGrid');
-    catGrid.innerHTML = state.categories.map((c) => `
-      <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex justify-between items-start">
-        <div>
-          <div class="font-bold text-xs text-slate-900">${c.name}</div>
-          <p class="text-[11px] text-slate-500 mt-0.5 line-clamp-2">${c.description || 'No description'}</p>
-          <span class="inline-block mt-2 text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">${c.productCount || 0} products</span>
+    if (state.categories.length === 0) {
+      catGrid.innerHTML = `<div class="col-span-full py-6 text-center text-gray-400 text-xs">No categories created yet. Click "Add Category".</div>`;
+    } else {
+      catGrid.innerHTML = state.categories.map((c) => `
+        <div class="bg-gray-50 p-3.5 rounded border border-gray-200 flex justify-between items-start">
+          <div>
+            <div class="font-bold text-xs text-gray-900">${c.name}</div>
+            <p class="text-[11px] text-gray-500 mt-0.5 line-clamp-2">${c.description || 'No description'}</p>
+            <span class="inline-block mt-2 text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">${c.productCount || 0} products</span>
+          </div>
+          <button onclick="handleDeleteCategory('${c._id}')" class="text-gray-400 hover:text-red-700 text-xs p-1">
+            <i class="fa-solid fa-trash"></i>
+          </button>
         </div>
-        <button onclick="handleDeleteCategory('${c._id}')" class="text-slate-400 hover:text-rose-600 text-xs">
-          <i class="fa-solid fa-trash"></i>
-        </button>
-      </div>
-    `).join('');
+      `).join('');
+    }
 
     // 4. All Orders Audit
     const ordersRes = await api.getAllOrders();
     const orders = ordersRes.data.data;
     const ordersTable = document.getElementById('adminOrdersTableBody');
-    ordersTable.innerHTML = orders.map((o) => `
-      <tr class="hover:bg-slate-50/60 transition">
-        <td class="px-4 py-3 font-mono text-xs font-bold text-slate-900">${o.orderCode}</td>
-        <td class="px-4 py-3 text-xs text-slate-700">${o.customer?.name || 'Customer'}</td>
-        <td class="px-4 py-3 text-xs text-slate-600">${o.items?.length || 0} items</td>
-        <td class="px-4 py-3 text-xs font-bold text-slate-900">₹${o.totalPrice.toLocaleString('en-IN')}</td>
-        <td class="px-4 py-3 text-xs text-slate-500">${o.paymentMethod}</td>
-        <td class="px-4 py-3">
-          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800">${o.orderStatus}</span>
-        </td>
-        <td class="px-4 py-3 text-right">
-          <select onchange="handleUpdateOrderStatus('${o._id}', this.value)" class="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1">
-            <option value="">Status</option>
-            <option value="Delivered">Mark Delivered</option>
-            <option value="Cancelled">Cancel Order</option>
-          </select>
-        </td>
-      </tr>
-    `).join('');
+    if (orders.length === 0) {
+      ordersTable.innerHTML = `<tr><td colspan="7" class="px-4 py-6 text-center text-gray-400">No orders placed on platform yet.</td></tr>`;
+    } else {
+      ordersTable.innerHTML = orders.map((o) => `
+        <tr class="hover:bg-gray-50 transition">
+          <td class="px-4 py-2.5 font-mono text-xs font-bold text-gray-900">${o.orderCode}</td>
+          <td class="px-4 py-2.5 text-xs text-gray-700">${o.customer?.name || 'Customer'}</td>
+          <td class="px-4 py-2.5 text-xs text-gray-600">${o.items?.length || 0} items</td>
+          <td class="px-4 py-2.5 text-xs font-bold text-gray-900">₹${o.totalPrice.toLocaleString('en-IN')}</td>
+          <td class="px-4 py-2.5 text-xs text-gray-500">${o.paymentMethod}</td>
+          <td class="px-4 py-2.5">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-800">${o.orderStatus}</span>
+          </td>
+          <td class="px-4 py-2.5 text-right">
+            <select onchange="handleUpdateOrderStatus('${o._id}', this.value)" class="text-xs bg-white border border-gray-300 rounded px-2 py-1">
+              <option value="">Status</option>
+              <option value="Delivered">Mark Delivered</option>
+              <option value="Cancelled">Cancel Order</option>
+            </select>
+          </td>
+        </tr>
+      `).join('');
+    }
   } catch (err) {
     console.error('Failed to load admin data', err);
   }
@@ -1124,11 +1148,11 @@ async function loadAdminData() {
 function switchAdminSubtab(subtab) {
   document.querySelectorAll('.admin-subtab').forEach((btn) => {
     if (btn.getAttribute('data-subtab') === subtab) {
-      btn.classList.add('active', 'bg-indigo-50', 'text-indigo-700');
-      btn.classList.remove('text-slate-600');
+      btn.classList.add('active', 'bg-blue-100', 'text-blue-800');
+      btn.classList.remove('text-gray-600');
     } else {
-      btn.classList.remove('active', 'bg-indigo-50', 'text-indigo-700');
-      btn.classList.add('text-slate-600');
+      btn.classList.remove('active', 'bg-blue-100', 'text-blue-800');
+      btn.classList.add('text-gray-600');
     }
   });
 
@@ -1183,11 +1207,11 @@ async function handleDeleteCategory(id) {
   }
 }
 
-// Product Details & Review Modal
+// Product Details & Review Modal (Classic Design)
 async function openProductDetailModal(productId) {
   const modal = document.getElementById('productDetailModal');
   const content = document.getElementById('productDetailModalContent');
-  content.innerHTML = '<div class="p-12 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin text-2xl"></i></div>';
+  content.innerHTML = '<div class="p-12 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl"></i></div>';
   modal.classList.remove('hidden');
 
   try {
@@ -1196,93 +1220,91 @@ async function openProductDetailModal(productId) {
     const vendorName = p.vendor?.vendorDetails?.storeName || p.vendor?.name || 'Verified Vendor';
 
     content.innerHTML = `
-      <div class="relative p-6 sm:p-8">
-        <button onclick="closeProductDetailModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600">
+      <div class="relative p-6 sm:p-7">
+        <button onclick="closeProductDetailModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <img src="${p.imageUrl}" class="w-full h-72 object-cover rounded-xl border border-slate-200" />
+          <img src="${p.imageUrl}" class="w-full h-64 object-cover rounded border border-gray-200" />
           <div class="flex flex-col justify-between">
             <div>
-              <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider">${p.category?.name || 'Catalog'}</span>
-              <h2 class="text-xl font-bold text-slate-900 mt-1">${p.title}</h2>
-              <div class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-store mr-1 text-slate-400"></i> Sold by: <strong>${vendorName}</strong></div>
+              <span class="text-xs font-bold text-blue-700 uppercase tracking-wider">${p.category?.name || 'Catalog'}</span>
+              <h2 class="text-lg font-bold text-gray-900 mt-1">${p.title}</h2>
+              <div class="text-xs text-gray-500 mt-1"><i class="fa-solid fa-store mr-1 text-gray-400"></i> Merchant: <strong>${vendorName}</strong></div>
 
-              <div class="mt-3 flex items-center space-x-2">
-                <span class="text-amber-500 font-bold text-sm"><i class="fa-solid fa-star"></i> ${p.rating || '4.8'}</span>
-                <span class="text-xs text-slate-400">(${p.numReviews || 0} reviews)</span>
-                <span class="text-slate-300">•</span>
-                <span class="text-xs ${p.stock > 0 ? 'text-emerald-600 font-semibold' : 'text-rose-600 font-semibold'}">
-                  ${p.stock > 0 ? `${p.stock} units available` : 'Out of stock'}
+              <div class="mt-2.5 flex items-center space-x-2">
+                <span class="text-amber-600 font-bold text-xs"><i class="fa-solid fa-star"></i> ${p.rating || '4.8'}</span>
+                <span class="text-xs text-gray-400">(${p.numReviews || 0} reviews)</span>
+                <span class="text-gray-300">•</span>
+                <span class="text-xs ${p.stock > 0 ? 'text-green-700 font-semibold' : 'text-red-700 font-semibold'}">
+                  ${p.stock > 0 ? `${p.stock} units in stock` : 'Out of stock'}
                 </span>
               </div>
 
-              <div class="mt-4">
-                <div class="text-2xl font-extrabold text-slate-900">₹${p.price.toLocaleString('en-IN')}</div>
-                ${p.comparePrice > p.price ? `<div class="text-xs text-slate-400 line-through">MRP: ₹${p.comparePrice.toLocaleString('en-IN')}</div>` : ''}
+              <div class="mt-3">
+                <div class="text-xl font-bold text-gray-900">₹${p.price.toLocaleString('en-IN')}</div>
+                ${p.comparePrice > p.price ? `<div class="text-xs text-gray-400 line-through">MRP: ₹${p.comparePrice.toLocaleString('en-IN')}</div>` : ''}
               </div>
 
-              <p class="text-xs text-slate-600 mt-4 leading-relaxed">${p.description}</p>
+              <p class="text-xs text-gray-600 mt-3 leading-relaxed">${p.description}</p>
             </div>
 
-            <button onclick="addToCart('${p._id}'); closeProductDetailModal();" class="mt-6 w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow transition">
-              <i class="fa-solid fa-cart-plus mr-2"></i> Add to Bag
+            <button onclick="addToCart('${p._id}'); closeProductDetailModal();" class="mt-5 w-full py-2.5 rounded bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition">
+              <i class="fa-solid fa-cart-plus mr-1.5"></i> Add to Shopping Bag
             </button>
           </div>
         </div>
 
         <!-- Product Reviews Section -->
-        <div class="mt-8 pt-6 border-t border-slate-200">
-          <h4 class="font-bold text-sm text-slate-900 mb-3">Customer Reviews & Ratings</h4>
-          <div class="space-y-3 max-h-48 overflow-y-auto pr-2">
+        <div class="mt-6 pt-5 border-t border-gray-200">
+          <h4 class="font-bold text-xs text-gray-800 uppercase tracking-wider mb-2.5">Customer Reviews & Ratings</h4>
+          <div class="space-y-2.5 max-h-44 overflow-y-auto pr-1">
             ${
               p.reviews && p.reviews.length > 0
                 ? p.reviews.map((r) => `
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <div class="p-2.5 bg-gray-50 rounded border border-gray-200 text-xs">
                       <div class="flex items-center justify-between">
-                        <span class="font-bold text-xs text-slate-800">${r.user?.name || 'Customer'}</span>
-                        <div class="text-amber-500 text-xs">
+                        <span class="font-bold text-gray-800">${r.user?.name || 'Customer'}</span>
+                        <div class="text-amber-500 text-[11px]">
                           ${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}
                         </div>
                       </div>
-                      <p class="text-xs text-slate-600 mt-1">${r.comment}</p>
+                      <p class="text-gray-600 mt-1">${r.comment}</p>
                     </div>
                   `).join('')
-                : '<p class="text-xs text-slate-400">No reviews yet for this product.</p>'
+                : '<p class="text-xs text-gray-400">No reviews recorded yet for this product.</p>'
             }
           </div>
 
-          <!-- Add Review Form (Logged in user) -->
+          <!-- Add Review Form -->
           ${
             state.currentUser
               ? `
-                <form onsubmit="handleReviewSubmit(event, '${p._id}')" class="mt-4 pt-4 border-t border-slate-100">
-                  <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-bold text-slate-700">Write a Review</span>
-                    <div class="flex items-center space-x-1">
-                      <select id="reviewRatingInput" class="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1">
-                        <option value="5">5 - Excellent</option>
-                        <option value="4">4 - Good</option>
-                        <option value="3">3 - Average</option>
-                        <option value="2">2 - Poor</option>
-                        <option value="1">1 - Terrible</option>
-                      </select>
-                    </div>
+                <form onsubmit="handleReviewSubmit(event, '${p._id}')" class="mt-3.5 pt-3 border-t border-gray-100">
+                  <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-xs font-bold text-gray-700">Submit a Verified Review</span>
+                    <select id="reviewRatingInput" class="text-xs bg-gray-50 border border-gray-300 rounded px-2 py-0.5">
+                      <option value="5">5 Stars - Excellent</option>
+                      <option value="4">4 Stars - Good</option>
+                      <option value="3">3 Stars - Average</option>
+                      <option value="2">2 Stars - Poor</option>
+                      <option value="1">1 Star - Terrible</option>
+                    </select>
                   </div>
                   <div class="flex space-x-2">
-                    <input type="text" id="reviewCommentInput" required placeholder="Share your experience..." class="flex-1 text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500" />
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg transition">Submit</button>
+                    <input type="text" id="reviewCommentInput" required placeholder="Write your feedback..." class="flex-1 text-xs px-2.5 py-1.5 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-blue-600" />
+                    <button type="submit" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded transition">Submit</button>
                   </div>
                 </form>
               `
-              : '<p class="text-[11px] text-slate-400 mt-3">Please sign in to write a review.</p>'
+              : '<p class="text-[11px] text-gray-400 mt-2.5">Please sign in to write a review.</p>'
           }
         </div>
       </div>
     `;
   } catch (err) {
-    content.innerHTML = `<div class="p-6 text-rose-600 text-xs">${err.message}</div>`;
+    content.innerHTML = `<div class="p-5 text-red-700 text-xs">${err.message}</div>`;
   }
 }
 
@@ -1324,13 +1346,13 @@ function switchAuthMode(mode) {
   if (mode === 'login') {
     loginForm.classList.remove('hidden');
     registerForm.classList.add('hidden');
-    tabLogin.className = 'flex-1 py-2 font-bold text-sm border-b-2 border-indigo-600 text-indigo-600 text-center';
-    tabRegister.className = 'flex-1 py-2 font-bold text-sm text-slate-400 text-center';
+    tabLogin.className = 'flex-1 py-2 font-bold text-xs border-b-2 border-blue-600 text-blue-700 text-center';
+    tabRegister.className = 'flex-1 py-2 font-bold text-xs text-gray-400 text-center';
   } else {
     loginForm.classList.add('hidden');
     registerForm.classList.remove('hidden');
-    tabRegister.className = 'flex-1 py-2 font-bold text-sm border-b-2 border-indigo-600 text-indigo-600 text-center';
-    tabLogin.className = 'flex-1 py-2 font-bold text-sm text-slate-400 text-center';
+    tabRegister.className = 'flex-1 py-2 font-bold text-xs border-b-2 border-blue-600 text-blue-700 text-center';
+    tabLogin.className = 'flex-1 py-2 font-bold text-xs text-gray-400 text-center';
   }
 }
 
@@ -1399,44 +1421,45 @@ function renderApiExplorerEndpoints(filterActor = 'all') {
     const actualIndex = API_ENDPOINTS.indexOf(item);
     const isSelected = actualIndex === state.selectedApiEndpointIndex;
     const methodColor = {
-      GET: 'bg-emerald-100 text-emerald-800',
-      POST: 'bg-indigo-100 text-indigo-800',
+      GET: 'bg-green-100 text-green-800',
+      POST: 'bg-blue-100 text-blue-800',
       PUT: 'bg-amber-100 text-amber-800',
-      DELETE: 'bg-rose-100 text-rose-800',
-    }[item.method] || 'bg-slate-100 text-slate-800';
+      DELETE: 'bg-red-100 text-red-800',
+    }[item.method] || 'bg-gray-100 text-gray-800';
 
     return `
       <div
         onclick="selectApiEndpoint(${actualIndex})"
-        class="p-3 rounded-xl border cursor-pointer transition ${
+        class="p-2.5 rounded border cursor-pointer transition ${
           isSelected
-            ? 'bg-indigo-50/70 border-indigo-400 shadow-sm'
-            : 'bg-white border-slate-200 hover:border-slate-300'
+            ? 'bg-blue-50 border-blue-400 shadow-sm'
+            : 'bg-white border-gray-200 hover:border-gray-300'
         }"
       >
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-2">
-            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${methodColor}">${item.method}</span>
-            <span class="font-mono text-xs font-semibold text-slate-800">${item.endpoint}</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${methodColor}">${item.method}</span>
+            <span class="font-mono text-xs font-semibold text-gray-800">${item.endpoint}</span>
           </div>
           <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
-            item.actor === 'admin' ? 'bg-amber-100 text-amber-800' : item.actor === 'vendor' ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-700'
+            item.actor === 'admin' ? 'bg-amber-100 text-amber-800' : item.actor === 'vendor' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700'
           }">${item.actor}</span>
         </div>
-        <p class="text-[11px] text-slate-500 mt-1 line-clamp-1">${item.description}</p>
+        <p class="text-[11px] text-gray-500 mt-1 line-clamp-1">${item.description}</p>
       </div>
     `;
   }).join('');
 }
 
 function filterApiActor(actor) {
+  state.currentApiFilterActor = actor;
   document.querySelectorAll('.api-actor-btn').forEach((btn) => {
     if (btn.getAttribute('data-actor') === actor) {
-      btn.classList.add('active', 'bg-indigo-50', 'text-indigo-700');
-      btn.classList.remove('text-slate-600');
+      btn.classList.add('active', 'bg-blue-100', 'text-blue-800');
+      btn.classList.remove('text-gray-600');
     } else {
-      btn.classList.remove('active', 'bg-indigo-50', 'text-indigo-700');
-      btn.classList.add('text-slate-600');
+      btn.classList.remove('active', 'bg-blue-100', 'text-blue-800');
+      btn.classList.add('text-gray-600');
     }
   });
   renderApiExplorerEndpoints(actor);
@@ -1456,7 +1479,7 @@ function selectApiEndpoint(index) {
 
   methodBadge.textContent = item.method;
   methodBadge.className = `px-2 py-0.5 rounded text-xs font-mono font-bold ${
-    item.method === 'GET' ? 'bg-emerald-500 text-slate-950' : item.method === 'POST' ? 'bg-indigo-500 text-white' : item.method === 'PUT' ? 'bg-amber-500 text-slate-950' : 'bg-rose-500 text-white'
+    item.method === 'GET' ? 'bg-green-600 text-white' : item.method === 'POST' ? 'bg-blue-600 text-white' : item.method === 'PUT' ? 'bg-amber-600 text-white' : 'bg-red-600 text-white'
   }`;
 
   endpointPath.textContent = item.endpoint;

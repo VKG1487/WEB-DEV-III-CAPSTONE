@@ -1,0 +1,119 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+
+dotenv.config();
+
+const app = require('../src/app');
+const Product = require('../src/models/Product');
+const Category = require('../src/models/Category');
+const Order = require('../src/models/Order');
+
+let server;
+let baseUrl;
+let customerId;
+let adminId;
+let testProduct;
+
+test.before(async () => {
+  await mongoose.connect(process.env.MONGO_URI);
+  await new Promise((resolve) => {
+    server = app.listen(0, () => {
+      baseUrl = `http://127.0.0.1:${server.address().port}`;
+      resolve();
+    });
+  });
+
+  // Login customer & admin
+  const custRes = await (await fetch(`${baseUrl}/api/users/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'customer@shopsphere.com', password: 'customerpassword123' })
+  })).json();
+  customerId = custRes.data._id || custRes.data.id;
+
+  const adminRes = await (await fetch(`${baseUrl}/api/users/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'admin@shopsphere.com', password: 'adminpassword123' })
+  })).json();
+  adminId = adminRes.data._id || adminRes.data.id;
+
+  const prodRes = await (await fetch(`${baseUrl}/api/products?limit=1`)).json();
+  testProduct = prodRes.data[0];
+});
+
+test.after(async () => {
+  await mongoose.connection.close();
+  await new Promise((resolve) => server.close(resolve));
+});
+
+test('Edge Case 1: Order with quantity exceeding stock should fail with 400', async () => {
+  const res = await fetch(`${baseUrl}/api/orders`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-user-id': customerId,
+      'role': 'customer'
+    },
+    body: JSON.stringify({
+      items: [{ productId: testProduct._id, quantity: 99999 }],
+      shippingAddress: 'Gurugram, India'
+    })
+  });
+
+  assert.equal(res.status, 400);
+  const data = await res.json();
+  assert.equal(data.success, false);
+  assert.match(data.error, /Insufficient stock/i);
+});
+
+test('Edge Case 2: Order with empty items array should fail with 400', async () => {
+  const res = await fetch(`${baseUrl}/api/orders`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-user-id': customerId,
+      'role': 'customer'
+    },
+    body: JSON.stringify({
+      items: [],
+      shippingAddress: 'Gurugram, India'
+    })
+  });
+
+  assert.equal(res.status, 400);
+  const data = await res.json();
+  assert.equal(data.success, false);
+});
+
+test('Edge Case 3: Admin self-deletion protection', async () => {
+  const res = await fetch(`${baseUrl}/api/users/${adminId}`, {
+    method: 'DELETE',
+    headers: {
+      'x-user-id': adminId,
+      'role': 'admin'
+    }
+  });
+
+  assert.equal(res.status, 400);
+  const data = await res.json();
+  assert.equal(data.success, false);
+  assert.match(data.error, /cannot delete your own/i);
+});
+
+test('Edge Case 4: Category deletion blocked when products are assigned', async () => {
+  const res = await fetch(`${baseUrl}/api/categories/${testProduct.category._id || testProduct.category}`, {
+    method: 'DELETE',
+    headers: {
+      'x-user-id': adminId,
+      'role': 'admin'
+    }
+  });
+
+  assert.equal(res.status, 400);
+  const data = await res.json();
+  assert.equal(data.success, false);
+  assert.match(data.error, /Cannot delete category/i);
+});

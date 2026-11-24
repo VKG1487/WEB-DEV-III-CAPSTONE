@@ -1,33 +1,29 @@
-/* Custom Styling Enhancements */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
+/* Classic Web Application Stylesheet - Web Dev 3 Capstone */
 body {
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #1e293b;
+  background-color: #f8fafc;
 }
 
 code, pre, .font-mono {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: Consolas, Monaco, "Courier New", monospace;
 }
 
+/* Classic active states */
 .nav-btn.active {
-  background-color: #f1f5f9;
-  color: #4f46e5;
+  background-color: #e0e7ff;
+  color: #1d4ed8;
   font-weight: 600;
+  border-bottom: 2px solid #2563eb;
 }
 
 .category-pill.active {
-  background-color: #4f46e5;
+  background-color: #2563eb;
   color: #ffffff;
+  border-color: #2563eb;
 }
 
-/* Glassmorphism subtle effects */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-/* Custom scrollbars */
+/* Clean standard scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -38,28 +34,24 @@ code, pre, .font-mono {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 9999px;
+  background: #94a3b8;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #64748b;
 }
 
-/* Toast animations */
-@keyframes slideInUp {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
+/* Toast alert notification */
 .toast {
-  animation: slideInUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: all 0.25s ease-in-out;
+}
+
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .line-clamp-2 {
@@ -69,3 +61,7 @@ code, pre, .font-mono {
   overflow: hidden;
 }
 
+/* Classic table styling */
+table th {
+  letter-spacing: 0.025em;
+}

@@ -8,7 +8,8 @@
     "dev": "nodemon src/server.js",
     "seed": "node src/seeds/seed.js",
     "seed:destroy": "node src/seeds/seed.js -d",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "test:verify": "node tests/debug_verify.js"
   },
   "keywords": [
     "nodejs",

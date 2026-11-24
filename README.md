@@ -83,12 +83,12 @@ The solution integrates:
 | **Backend Framework** | Express.js | ^4.21.2 | RESTful routing, middleware pipelines, static asset delivery |
 | **Database** | MongoDB | ^7.0+ | Document-oriented NoSQL database for flexible e-commerce schemas |
 | **ODM** | Mongoose | ^8.9.5 | Schema definitions, strict data validations, indexes, and hooks |
-| **Authentication** | JSON Web Tokens (`jsonwebtoken`) | ^9.0.2 | Signed stateless access tokens with customizable expiration |
+| **Authentication & RBAC** | Custom Express Middleware & Headers | Built-in | Role-based authorization via `role` & `x-user-id` headers |
 | **Security** | `bcryptjs` | ^2.4.3 | Cryptographic password hashing using one-way salt rounds |
 | **Cross-Origin** | `cors` | ^2.8.5 | Cross-Origin Resource Sharing policy enforcement |
 | **Logging** | `morgan` | ^1.10.0 | HTTP request logger middleware for debugging and auditing |
 | **Environment** | `dotenv` | ^16.4.7 | Zero-dependency environment variable isolation |
-| **Frontend UI** | Modern HTML5, Tailwind CSS, FontAwesome | Modern CDN | Responsive, glassmorphic client interface with live modals |
+| **Frontend UI** | Semantic HTML5, Classic CSS, FontAwesome | Modern CDN | Clean, solid academic/corporate styling (no gradients/AI aesthetics) |
 | **Testing** | Node.js Test Runner (`node:test`, `node:assert`) | Built-in | Automated unit and integration testing of endpoints and RBAC |
 
 ### 4. Architectural Implementation
@@ -201,12 +201,18 @@ Once the server is running, access the application via your browser:
 * **REST API Health Check:** [http://localhost:5000/api/health](http://localhost:5000/api/health)
 * **Interactive API Explorer:** [http://localhost:5000](http://localhost:5000) -> Click **"API Explorer"** in the top navigation bar.
 
-### 8. Automated Testing Suite
-Execute the built-in end-to-end integration and RBAC test suite:
+### 8. Automated Testing & Verification Suite
+Execute the built-in automated test suite (Integration + Edge Cases):
 ```bash
 npm test
 ```
-*Expected test outcome: 7 passing tests verifying health, multi-role auth, 403 forbidden access restrictions, product queries, order placement, order history retrieval, and status updates.*
+*Expected test outcome: 11 passing tests verifying system health, multi-role auth, 403 forbidden access restrictions, product queries, order placement, order history retrieval, status updates, stock exhaustion blocks (400), empty items validation (400), admin self-deletion prevention (400), and category deletion safety (400).*
+
+Run the multi-pass end-to-end debug verification script:
+```bash
+npm run test:verify
+```
+*Expected outcome: Verifies atomic inventory decrements upon order creation, atomic stock restorations upon cancellation, vendor CRUD workflows, and admin metrics with live database integrity assertions.*
 
 ---
 
@@ -255,14 +261,14 @@ ShopSphere features **three distinct user actors**, each with isolated authoriza
 |---|---|---|---|
 | `POST` | `/api/users/register` | Register a new customer account | No (Public) |
 | `POST` | `/api/users/login` | Login user account | No (Public) |
-| `GET` | `/api/users/profile` | View logged-in customer profile | Yes (`Bearer <token>`) |
-| `PUT` | `/api/users/profile` | Update personal profile & address | Yes (`Bearer <token>`) |
+| `GET` | `/api/users/profile` | View logged-in customer profile | Yes (Headers: `x-user-id`, `role`) |
+| `PUT` | `/api/users/profile` | Update personal profile & address | Yes (Headers: `x-user-id`, `role`) |
 | `GET` | `/api/products` | Browse and filter product catalog | No (Public) |
 | `GET` | `/api/products/:id` | View product details and reviews | No (Public) |
-| `POST` | `/api/orders` | Place an order | Yes (`Bearer <token>`, Customer) |
-| `GET` | `/api/orders/my-orders` | View personal order history | Yes (`Bearer <token>`, Customer) |
-| `PUT` | `/api/orders/:id/cancel`| Cancel a pending personal order | Yes (`Bearer <token>`, Customer) |
-| `POST` | `/api/products/:id/reviews` | Submit product star rating & review | Yes (`Bearer <token>`, Customer) |
+| `POST` | `/api/orders` | Place an order | Yes (Headers: `x-user-id`, `role: customer`) |
+| `GET` | `/api/orders/my-orders` | View personal order history | Yes (Headers: `x-user-id`, `role: customer`) |
+| `PUT` | `/api/orders/:id/cancel`| Cancel a pending personal order | Yes (Headers: `x-user-id`, `role: customer`) |
+| `POST` | `/api/products/:id/reviews` | Submit product star rating & review | Yes (Headers: `x-user-id`, `role: customer`) |
 
 ---
 
@@ -287,7 +293,6 @@ ShopSphere features **three distinct user actors**, each with isolated authoriza
 {
   "success": true,
   "message": "User registered successfully",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "data": {
     "id": "6742fe5a4b51a89012345678",
     "name": "Vibhash Kumar",
@@ -314,7 +319,6 @@ ShopSphere features **three distinct user actors**, each with isolated authoriza
 {
   "success": true,
   "message": "User logged in successfully",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "data": {
     "id": "6742fe5a4b51a89012345678",
     "name": "Vibhash Kumar",
@@ -327,7 +331,7 @@ ShopSphere features **three distinct user actors**, each with isolated authoriza
 ##### 1.3 Place an Order
 * **Endpoint:** `POST /api/orders`
 * **Purpose:** Creates an order, decrements stock atomically, and records shipping parameters.
-* **Headers:** `Authorization: Bearer <customer_token>`, `Content-Type: application/json`
+* **Headers:** `x-user-id: <customer_id>`, `role: customer`, `Content-Type: application/json`
 * **Request Body:**
 ```json
 {
@@ -368,7 +372,7 @@ ShopSphere features **three distinct user actors**, each with isolated authoriza
 ##### 1.4 View Personal Orders
 * **Endpoint:** `GET /api/orders/my-orders`
 * **Purpose:** Retrieves all orders placed by the authenticated customer.
-* **Headers:** `Authorization: Bearer <customer_token>`
+* **Headers:** `x-user-id: <customer_id>`, `role: customer`
 * **Expected Response (`200 OK`):**
 ```json
 {
@@ -399,13 +403,13 @@ ShopSphere features **three distinct user actors**, each with isolated authoriza
 #### Endpoints Summary
 | Method | Endpoint | Description | Auth Required |
 |---|---|---|---|
-| `GET` | `/api/products/vendor/my-products` | List all catalog products owned by vendor | Yes (`Bearer <token>`, Vendor) |
-| `POST` | `/api/products` | Create a new catalog product | Yes (`Bearer <token>`, Vendor/Admin) |
-| `PUT` | `/api/products/:id` | Update vendor's existing product | Yes (`Bearer <token>`, Product Owner) |
-| `DELETE` | `/api/products/:id` | Delete vendor's product from catalog | Yes (`Bearer <token>`, Product Owner) |
-| `GET` | `/api/orders/vendor/my-orders` | View orders containing vendor's items | Yes (`Bearer <token>`, Vendor) |
-| `PUT` | `/api/orders/:id/status` | Advance shipment status (`Processing`, `Shipped`) | Yes (`Bearer <token>`, Vendor/Admin) |
-| `GET` | `/api/stats/vendor` | Get vendor revenue, orders & stock alerts | Yes (`Bearer <token>`, Vendor) |
+| `GET` | `/api/products/vendor/my-products` | List all catalog products owned by vendor | Yes (Headers: `x-user-id`, `role: vendor`) |
+| `POST` | `/api/products` | Create a new catalog product | Yes (Headers: `x-user-id`, `role: vendor/admin`) |
+| `PUT` | `/api/products/:id` | Update vendor's existing product | Yes (Headers: `x-user-id`, Product Owner) |
+| `DELETE` | `/api/products/:id` | Delete vendor's product from catalog | Yes (Headers: `x-user-id`, Product Owner) |
+| `GET` | `/api/orders/vendor/my-orders` | View orders containing vendor's items | Yes (Headers: `x-user-id`, `role: vendor`) |
+| `PUT` | `/api/orders/:id/status` | Advance shipment status (`Processing`, `Shipped`) | Yes (Headers: `x-user-id`, `role: vendor/admin`) |
+| `GET` | `/api/stats/vendor` | Get vendor revenue, orders & stock alerts | Yes (Headers: `x-user-id`, `role: vendor`) |
 
 ---
 
@@ -414,7 +418,7 @@ ShopSphere features **three distinct user actors**, each with isolated authoriza
 ##### 2.1 Create New Product
 * **Endpoint:** `POST /api/products`
 * **Purpose:** Allows a vendor to publish a new product with stock, category, and price.
-* **Headers:** `Authorization: Bearer <vendor_token>`, `Content-Type: application/json`
+* **Headers:** `x-user-id: <vendor_id>`, `role: vendor`, `Content-Type: application/json`
 * **Request Body:**
 ```json
 {
@@ -449,7 +453,7 @@ ShopSphere features **three distinct user actors**, each with isolated authoriza
 ##### 2.2 Update Order Shipment Status
 * **Endpoint:** `PUT /api/orders/:id/status`
 * **Purpose:** Transitions order state through fulfillment lifecycle.
-* **Headers:** `Authorization: Bearer <vendor_token>`, `Content-Type: application/json`
+* **Headers:** `x-user-id: <vendor_id>`, `role: vendor`, `Content-Type: application/json`
 * **Request Body:**
 ```json
 {
@@ -472,7 +476,7 @@ ShopSphere features **three distinct user actors**, each with isolated authoriza
 ##### 2.3 Vendor Analytics
 * **Endpoint:** `GET /api/stats/vendor`
 * **Purpose:** Returns total products listed, low-stock warnings, units sold, and cumulative earnings.
-* **Headers:** `Authorization: Bearer <vendor_token>`
+* **Headers:** `x-user-id: <vendor_id>`, `role: vendor`
 * **Expected Response (`200 OK`):**
 ```json
 {
@@ -494,15 +498,15 @@ ShopSphere features **three distinct user actors**, each with isolated authoriza
 #### Endpoints Summary
 | Method | Endpoint | Description | Auth Required |
 |---|---|---|---|
-| `GET` | `/api/stats/admin` | System-wide platform revenue & KPIs | Yes (`Bearer <token>`, Admin) |
-| `GET` | `/api/users` | List all registered users and roles | Yes (`Bearer <token>`, Admin) |
-| `GET` | `/api/users/:id` | View specific user profile | Yes (`Bearer <token>`, Admin) |
-| `PUT` | `/api/users/:id` | Modify role (e.g., promote to vendor) or activate | Yes (`Bearer <token>`, Admin) |
-| `DELETE` | `/api/users/:id` | Remove a user account | Yes (`Bearer <token>`, Admin) |
-| `GET` | `/api/orders` | Master orders ledger across all merchants | Yes (`Bearer <token>`, Admin) |
-| `POST` | `/api/categories` | Create new product category taxonomy | Yes (`Bearer <token>`, Admin) |
-| `PUT` | `/api/categories/:id` | Update category details | Yes (`Bearer <token>`, Admin) |
-| `DELETE` | `/api/categories/:id` | Delete category (blocked if products exist) | Yes (`Bearer <token>`, Admin) |
+| `GET` | `/api/stats/admin` | System-wide platform revenue & KPIs | Yes (Headers: `x-user-id`, `role: admin`) |
+| `GET` | `/api/users` | List all registered users and roles | Yes (Headers: `x-user-id`, `role: admin`) |
+| `GET` | `/api/users/:id` | View specific user profile | Yes (Headers: `x-user-id`, `role: admin`) |
+| `PUT` | `/api/users/:id` | Modify role (e.g., promote to vendor) or activate | Yes (Headers: `x-user-id`, `role: admin`) |
+| `DELETE` | `/api/users/:id` | Remove a user account | Yes (Headers: `x-user-id`, `role: admin`) |
+| `GET` | `/api/orders` | Master orders ledger across all merchants | Yes (Headers: `x-user-id`, `role: admin`) |
+| `POST` | `/api/categories` | Create new product category taxonomy | Yes (Headers: `x-user-id`, `role: admin`) |
+| `PUT` | `/api/categories/:id` | Update category details | Yes (Headers: `x-user-id`, `role: admin`) |
+| `DELETE` | `/api/categories/:id` | Delete category (blocked if products exist) | Yes (Headers: `x-user-id`, `role: admin`) |
 
 ---
 
@@ -511,7 +515,7 @@ ShopSphere features **three distinct user actors**, each with isolated authoriza
 ##### 3.1 Get System-Wide Analytics
 * **Endpoint:** `GET /api/stats/admin`
 * **Purpose:** Returns comprehensive platform performance metrics.
-* **Headers:** `Authorization: Bearer <admin_token>`
+* **Headers:** `x-user-id: <admin_id>`, `role: admin`
 * **Expected Response (`200 OK`):**
 ```json
 {
@@ -543,7 +547,7 @@ ShopSphere features **three distinct user actors**, each with isolated authoriza
 ##### 3.2 Update User Role / Activation
 * **Endpoint:** `PUT /api/users/:id`
 * **Purpose:** Promotes or demotes user privileges or activates/deactivates an account.
-* **Headers:** `Authorization: Bearer <admin_token>`, `Content-Type: application/json`
+* **Headers:** `x-user-id: <admin_id>`, `role: admin`, `Content-Type: application/json`
 * **Request Body:**
 ```json
 {
@@ -569,7 +573,7 @@ ShopSphere features **three distinct user actors**, each with isolated authoriza
 ##### 3.3 Create New Category
 * **Endpoint:** `POST /api/categories`
 * **Purpose:** Adds a new top-level category with auto-generated slug.
-* **Headers:** `Authorization: Bearer <admin_token>`, `Content-Type: application/json`
+* **Headers:** `x-user-id: <admin_id>`, `role: admin`, `Content-Type: application/json`
 * **Request Body:**
 ```json
 {
@@ -618,7 +622,7 @@ The platform includes seed accounts ready for live evaluation:
 WEB-DEV-III-CAPSTONE/
 ├── public/                       # Frontend Web UI (SPA)
 │   ├── css/
-│   │   └── style.css             # Glassmorphism, badges, toast animations
+│   │   └── style.css             # Classic corporate/academic CSS styling, badges, toast notifications
 │   ├── js/
 │   │   ├── api.js                # Fetch client, header interceptor, API bindings
 │   │   └── app.js                # Application state, cart, modals, API Explorer
@@ -654,11 +658,14 @@ WEB-DEV-III-CAPSTONE/
 │   │   └── seed.js               # Comprehensive realistic database population script
 │   ├── utils/
 │   │   ├── asyncHandler.js       # Asynchronous route wrapper
-│   │   └── errorResponse.js      # Custom HTTP error class
+│   │   ├── errorResponse.js      # Custom HTTP error class
+│   │   └── eventEmitter.js       # Custom Node.js business event emitter
 │   ├── app.js                    # Express app configuration & middleware mounts
-│   └── server.js                 # Server entry point
+│   └── server.js                 # Server entry point with Socket.IO integration
 ├── tests/
-│   └── api.test.js               # End-to-end integration and RBAC test suite
+│   ├── api.test.js               # End-to-end integration and RBAC test suite (7 tests)
+│   ├── edge_cases.test.js        # Inventory exhaustion, empty orders, admin safety (4 tests)
+│   └── debug_verify.js           # Multi-pass end-to-end stock and lifecycle verification
 ├── .env.example                  # Environment variable configuration template
 ├── .gitignore                    # Git tracking ignore rules
 ├── package.json                  # Project metadata, scripts, and dependencies
