@@ -1,19 +1,7 @@
-// API Client Module with Authentication & Request Handling
+// API Client Module with Header-Based Role & User Authentication
 const API_BASE = '/api';
 
 const api = {
-  getToken() {
-    return localStorage.getItem('shopsphere_token') || null;
-  },
-
-  setToken(token) {
-    if (token) {
-      localStorage.setItem('shopsphere_token', token);
-    } else {
-      localStorage.removeItem('shopsphere_token');
-    }
-  },
-
   getUser() {
     const raw = localStorage.getItem('shopsphere_user');
     try {
@@ -32,14 +20,15 @@ const api = {
   },
 
   async request(endpoint, options = {}) {
-    const token = this.getToken();
+    const user = this.getUser();
     const headers = {
       'Content-Type': 'application/json',
       ...options.headers,
     };
 
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+    if (user) {
+      headers['x-user-id'] = user._id || user.id;
+      headers['role'] = user.role;
     }
 
     const config = {

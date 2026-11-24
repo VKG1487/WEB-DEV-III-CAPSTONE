@@ -26,3 +26,4 @@ appEvents.on('user:registered', (user) => {
 });
 
 module.exports = appEvents;
+

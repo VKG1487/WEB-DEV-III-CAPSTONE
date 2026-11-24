@@ -2,7 +2,7 @@
 
 > **Web Development 3 – Capstone Project**  
 > **Student:** Vibhash Kumar Giri (Roll No: 2501010069)  
-> **Repository:** Full-Stack Node.js, Express, MongoDB, JWT RBAC, and Modern Web UI Architecture
+> **Repository:** Full-Stack Node.js, Express, MongoDB, MVC Architecture, and Role-Based Access Control
 
 ---
 
@@ -52,7 +52,7 @@ Simultaneously, consumers frequently struggle with fragmented shopping experienc
 ### 3. Why the Proposed Application is Needed
 * **Decentralized Commerce with Centralized Governance:** Enables multiple autonomous vendors to operate under a governed, secure umbrella with strict role boundaries.
 * **Data Integrity & Concurrency Control:** Implements atomic inventory decrements and restores stock automatically upon order cancellations, preventing stockouts and over-selling.
-* **Industry-Standard Security:** Employs stateless JSON Web Tokens (JWT) with HTTP-only and Bearer token standards, salted bcrypt password hashing, and granular route authorization middleware.
+* **Role-Based Access Control:** Employs role-based access control (`role` & `x-user-id` headers), salted bcrypt password hashing, and granular route authorization middleware.
 * **Auditable Financials:** Computes subtotal, dynamic Goods and Services Tax (18% GST), and tiered shipping fees systematically.
 
 ---
@@ -63,7 +63,7 @@ Simultaneously, consumers frequently struggle with fragmented shopping experienc
 **ShopSphere** is a production-oriented, full-stack multi-vendor e-commerce web platform architected using the Model-View-Controller (MVC) pattern. It decouples administrative, merchant, and consumer concerns through a modular Express REST API backend and a single-page reactive client.
 
 The solution integrates:
-1. **Stateless JWT Authentication & RBAC Middleware:** Restricts endpoint access strictly based on verified user claims (`customer`, `vendor`, `admin`).
+1. **Role-Based Authentication & Authorization Middleware:** Restricts endpoint access strictly based on verified user roles (`customer`, `vendor`, `admin`) and user credentials.
 2. **Atomic Inventory Reconciliation:** Verifies catalog stock before accepting orders, decrementing quantities atomically upon order placement and restoring inventory upon cancellation.
 3. **Interactive Actor-Wise API Explorer:** A built-in web terminal allowing evaluators and developers to test every REST endpoint live within the application interface.
 4. **Automated Seeder Engine:** Pre-populates realistic multi-vendor catalogs, categorized products, verified reviews, and varied order states with one command (`npm run seed`).
@@ -108,7 +108,7 @@ The solution integrates:
                  ▼                                               ▼
      ┌────────────────────────┐                     ┌────────────────────────┐
      │  protect Middleware    │                     │  authorize Middleware  │
-     │  (Verifies JWT Bearer) │                     │ (customer/vendor/admin)│
+     │(Verifies User / Role)  │                     │ (customer/vendor/admin)│
      └───────────┬────────────┘                     └───────────┬────────────┘
                  └───────────────────────┬───────────────────────┘
                                          ▼
@@ -132,7 +132,7 @@ The application is intentionally designed to incorporate **only the concepts, te
 | **Unit 1: Node.js Core** | Node.js Runtime & NPM, CommonJS Modules, Core Modules (`http`, `path`, `events`), Process & CLI arguments | HTTP Server instantiation with `http.createServer()`, `path.join()`, process arguments in seeder (`process.argv`), CommonJS `require`/`module.exports` | `src/server.js`, `src/seeds/seed.js` |
 | **Unit 2: Express & MVC** | Express.js, Request & Response, MVC Architecture, REST CRUD, Middleware Chaining, Error Handling | Strict MVC folder structure (`models/`, `controllers/`, `routes/`, `views`), Express `Router()`, custom `requestLogger` middleware chaining, centralized Mongoose error handler | `src/app.js`, `src/controllers/*`, `src/routes/*`, `src/middleware/logger.js`, `src/middleware/error.js` |
 | **Unit 3: MongoDB & Mongoose** | Databases, MongoDB Atlas/Local, Mongoose ODM, Schemas, Built-in/Custom Validators, Relationships (`ref`/`populate`), Queries, Aggregation, Text Indexing | MongoDB connection with Mongoose, schemas with validators (`enum`, `min`, `max`, `match`), cross-collection references (`ObjectId`, `ref`), compound text search indexes, aggregation pipeline for revenue & ratings | `src/config/db.js`, `src/models/*`, `src/controllers/statsController.js` |
-| **Unit 4: Security & Real-Time** | Environment variables (`dotenv`), Password Hashing (`bcrypt`), JWT Auth, Protected Routes, RBAC, EventEmitter, WebSockets & Socket.IO | `.env` configuration, bcrypt salt rounds on pre-save, signed JWT tokens, `protect` & `authorize` RBAC middleware, custom Node.js `EventEmitter` for business events, Socket.IO real-time order alerts | `src/middleware/auth.js`, `src/utils/eventEmitter.js`, `src/server.js`, `public/js/app.js` |
+| **Unit 4: Security & Real-Time** | Environment variables (`dotenv`), Password Hashing (`bcrypt`), Protected Routes, RBAC, EventEmitter, WebSockets & Socket.IO | `.env` configuration, bcrypt salt rounds on pre-save, `protect` & `authorize` RBAC middleware (`role` & `x-user-id`), custom Node.js `EventEmitter` for business events, Socket.IO real-time order alerts | `src/middleware/auth.js`, `src/utils/eventEmitter.js`, `src/server.js`, `public/js/app.js` |
 
 ---
 
@@ -174,10 +174,6 @@ NODE_ENV=development
 
 # MongoDB Connection String (Local or Atlas)
 MONGO_URI=mongodb://127.0.0.1:27017/shopsphere_db
-
-# JWT Secret and Expiration Duration
-JWT_SECRET=super_secret_shopsphere_jwt_key_2026_capstone_secure_token
-JWT_EXPIRE=30d
 ```
 
 ### 5. Database Setup & Seeding
@@ -258,7 +254,7 @@ ShopSphere features **three distinct user actors**, each with isolated authoriza
 | Method | Endpoint | Description | Auth Required |
 |---|---|---|---|
 | `POST` | `/api/users/register` | Register a new customer account | No (Public) |
-| `POST` | `/api/users/login` | Login and obtain JWT token | No (Public) |
+| `POST` | `/api/users/login` | Login user account | No (Public) |
 | `GET` | `/api/users/profile` | View logged-in customer profile | Yes (`Bearer <token>`) |
 | `PUT` | `/api/users/profile` | Update personal profile & address | Yes (`Bearer <token>`) |
 | `GET` | `/api/products` | Browse and filter product catalog | No (Public) |
@@ -304,7 +300,7 @@ ShopSphere features **three distinct user actors**, each with isolated authoriza
 
 ##### 1.2 User Login
 * **Endpoint:** `POST /api/users/login`
-* **Purpose:** Authenticates user credentials and issues a signed JWT token.
+* **Purpose:** Authenticates user credentials with bcrypt password verification.
 * **Headers:** `Content-Type: application/json`
 * **Request Body:**
 ```json
@@ -624,7 +620,7 @@ WEB-DEV-III-CAPSTONE/
 │   ├── css/
 │   │   └── style.css             # Glassmorphism, badges, toast animations
 │   ├── js/
-│   │   ├── api.js                # Fetch client, JWT interceptor, API bindings
+│   │   ├── api.js                # Fetch client, header interceptor, API bindings
 │   │   └── app.js                # Application state, cart, modals, API Explorer
 │   └── index.html                # Responsive semantic HTML5 single-page application
 ├── src/
@@ -638,14 +634,15 @@ WEB-DEV-III-CAPSTONE/
 │   │   ├── statsController.js    # Admin & vendor analytical aggregation pipelines
 │   │   └── userController.js     # Admin user governance and RBAC controls
 │   ├── middleware/
-│   │   ├── auth.js               # JWT verification & RBAC authorization
-│   │   └── error.js              # Centralized Mongoose and HTTP error handler
+│   │   ├── auth.js               # User & role verification & RBAC authorization
+│   │   ├── error.js              # Centralized Mongoose and HTTP error handler
+│   │   └── logger.js             # Custom request logger middleware chaining
 │   ├── models/
 │   │   ├── Category.js           # Category schema with slugification hook
 │   │   ├── Order.js              # Order schema with items, pricing & status
 │   │   ├── Product.js            # Product schema with compound search indexes
 │   │   ├── Review.js             # Review schema with avg rating aggregation
-│   │   └── User.js               # User schema with bcrypt pre-save hashing & JWT
+│   │   └── User.js               # User schema with bcrypt pre-save password hashing
 │   ├── routes/
 │   │   ├── authRoutes.js         # /api/auth routes
 │   │   ├── categoryRoutes.js     # /api/categories routes

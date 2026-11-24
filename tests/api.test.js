@@ -9,9 +9,9 @@ const app = require('../src/app');
 
 let server;
 let baseUrl;
-let customerToken = '';
-let adminToken = '';
-let vendorToken = '';
+let customerId = '';
+let adminId = '';
+let vendorId = '';
 let testProductId = '';
 let testOrderId = '';
 
@@ -39,7 +39,7 @@ test('1. System Health Check Endpoint', async () => {
   assert.equal(data.message, 'ShopSphere API is operating normally');
 });
 
-test('2. User Authentication (Login Customer, Admin, Vendor)', async () => {
+test('2. User Authentication & Login (Customer, Admin, Vendor)', async () => {
   // Login customer
   const custRes = await fetch(`${baseUrl}/api/users/login`, {
     method: 'POST',
@@ -52,8 +52,8 @@ test('2. User Authentication (Login Customer, Admin, Vendor)', async () => {
   assert.equal(custRes.status, 200);
   const custData = await custRes.json();
   assert.equal(custData.success, true);
-  assert.ok(custData.token);
-  customerToken = custData.token;
+  assert.ok(custData.data._id || custData.data.id);
+  customerId = custData.data._id || custData.data.id;
 
   // Login admin
   const adminRes = await fetch(`${baseUrl}/api/users/login`, {
@@ -67,7 +67,7 @@ test('2. User Authentication (Login Customer, Admin, Vendor)', async () => {
   assert.equal(adminRes.status, 200);
   const adminData = await adminRes.json();
   assert.equal(adminData.success, true);
-  adminToken = adminData.token;
+  adminId = adminData.data._id || adminData.data.id;
 
   // Login vendor
   const vendorRes = await fetch(`${baseUrl}/api/users/login`, {
@@ -81,22 +81,28 @@ test('2. User Authentication (Login Customer, Admin, Vendor)', async () => {
   assert.equal(vendorRes.status, 200);
   const vendorData = await vendorRes.json();
   assert.equal(vendorData.success, true);
-  vendorToken = vendorData.token;
+  vendorId = vendorData.data._id || vendorData.data.id;
 });
 
 test('3. Role-Based Access Control (RBAC) Enforcement', async () => {
-  // Customer attempts to access Admin endpoint /api/users
+  // Customer attempts to access Admin endpoint /api/users -> 403 Forbidden
   const forbiddenRes = await fetch(`${baseUrl}/api/users`, {
-    headers: { Authorization: `Bearer ${customerToken}` },
+    headers: {
+      'x-user-id': customerId,
+      role: 'customer',
+    },
   });
   assert.equal(forbiddenRes.status, 403);
   const forbiddenData = await forbiddenRes.json();
   assert.equal(forbiddenData.success, false);
   assert.match(forbiddenData.error, /Forbidden/);
 
-  // Admin accesses Admin endpoint /api/users
+  // Admin accesses Admin endpoint /api/users -> 200 OK
   const allowedRes = await fetch(`${baseUrl}/api/users`, {
-    headers: { Authorization: `Bearer ${adminToken}` },
+    headers: {
+      'x-user-id': adminId,
+      role: 'admin',
+    },
   });
   assert.equal(allowedRes.status, 200);
   const allowedData = await allowedRes.json();
@@ -136,7 +142,8 @@ test('5. Order Placement (Capstone Specification Compliance)', async () => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${customerToken}`,
+      'x-user-id': customerId,
+      role: 'customer',
     },
     body: JSON.stringify(orderPayload),
   });
@@ -152,7 +159,10 @@ test('5. Order Placement (Capstone Specification Compliance)', async () => {
 
 test('6. Customer Personal Orders (/api/orders/my-orders)', async () => {
   const res = await fetch(`${baseUrl}/api/orders/my-orders`, {
-    headers: { Authorization: `Bearer ${customerToken}` },
+    headers: {
+      'x-user-id': customerId,
+      role: 'customer',
+    },
   });
   assert.equal(res.status, 200);
   const data = await res.json();
@@ -165,7 +175,8 @@ test('7. Order Status Transition (Vendor / Admin update)', async () => {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${adminToken}`,
+      'x-user-id': adminId,
+      role: 'admin',
     },
     body: JSON.stringify({ status: 'Processing' }),
   });
@@ -175,4 +186,3 @@ test('7. Order Status Transition (Vendor / Admin update)', async () => {
   assert.equal(data.success, true);
   assert.equal(data.data.orderStatus, 'Processing');
 });
-

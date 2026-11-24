@@ -34,7 +34,7 @@ const API_ENDPOINTS = [
     method: 'POST',
     endpoint: '/api/users/login',
     name: 'Login User',
-    description: 'Authenticates credentials and returns JWT bearer token',
+    description: 'Authenticates credentials and returns user profile session',
     authRequired: false,
     body: {
       email: 'customer@shopsphere.com',
@@ -274,7 +274,6 @@ function showToast(message, type = 'success') {
 async function quickLogin(email, password) {
   try {
     const res = await api.login(email, password);
-    api.setToken(res.data.token);
     api.setUser(res.data.data);
     state.currentUser = res.data.data;
     updateAuthUI();
@@ -295,7 +294,6 @@ async function quickLogin(email, password) {
 
 // Logout
 function logout() {
-  api.setToken(null);
   api.setUser(null);
   state.currentUser = null;
   updateAuthUI();
@@ -345,7 +343,7 @@ function updateAuthUI() {
     }
 
     if (activeTokenDisplay) {
-      activeTokenDisplay.textContent = `${api.getToken().substring(0, 18)}... (${role.toUpperCase()})`;
+      activeTokenDisplay.textContent = `${state.currentUser.name} (${role.toUpperCase()})`;
     }
   } else {
     authContainer.innerHTML = `
@@ -1352,7 +1350,6 @@ async function handleAuthLogin(e) {
 
   try {
     const res = await api.login(email, password);
-    api.setToken(res.data.token);
     api.setUser(res.data.data);
     state.currentUser = res.data.data;
     updateAuthUI();
@@ -1380,7 +1377,6 @@ async function handleAuthRegister(e) {
       storeName: role === 'vendor' ? storeName : undefined,
     });
 
-    api.setToken(res.data.token);
     api.setUser(res.data.data);
     state.currentUser = res.data.data;
     updateAuthUI();
@@ -1464,7 +1460,7 @@ function selectApiEndpoint(index) {
   }`;
 
   endpointPath.textContent = item.endpoint;
-  authNote.textContent = item.authRequired ? `Auth: Bearer Token Required (${item.actor.toUpperCase()})` : 'Auth: Public';
+  authNote.textContent = item.authRequired ? `Auth: Role Header Required (${item.actor.toUpperCase()})` : 'Auth: Public';
 
   if (item.body) {
     requestBody.value = JSON.stringify(item.body, null, 2);

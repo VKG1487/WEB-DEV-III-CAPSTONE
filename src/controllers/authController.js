@@ -3,16 +3,14 @@ const ErrorResponse = require('../utils/errorResponse');
 const User = require('../models/User');
 const appEvents = require('../utils/eventEmitter');
 
-// Helper function to send token in response
-const sendTokenResponse = (user, statusCode, res, message = 'Success') => {
-  const token = user.getSignedJwtToken();
-
+// Helper function to send authenticated user in response
+const sendAuthResponse = (user, statusCode, res, message = 'Success') => {
   res.status(statusCode).json({
     success: true,
     message,
-    token,
     data: {
       id: user._id,
+      _id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
@@ -58,7 +56,7 @@ exports.register = asyncHandler(async (req, res, next) => {
 
   appEvents.emit('user:registered', user);
 
-  sendTokenResponse(user, 201, res, 'User registered successfully');
+  sendAuthResponse(user, 201, res, 'User registered successfully');
 });
 
 // @desc    Login user
@@ -83,13 +81,13 @@ exports.login = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Account has been deactivated. Please contact support.', 403));
   }
 
-  // Check if password matches
+  // Check if password matches with bcrypt
   const isMatch = await user.matchPassword(password);
   if (!isMatch) {
     return next(new ErrorResponse('Invalid email or password credentials', 401));
   }
 
-  sendTokenResponse(user, 200, res, 'User logged in successfully');
+  sendAuthResponse(user, 200, res, 'User logged in successfully');
 });
 
 // @desc    Get current logged in user profile
@@ -150,6 +148,5 @@ exports.updatePassword = asyncHandler(async (req, res, next) => {
   user.password = newPassword;
   await user.save();
 
-  sendTokenResponse(user, 200, res, 'Password updated successfully');
+  sendAuthResponse(user, 200, res, 'Password updated successfully');
 });
-
